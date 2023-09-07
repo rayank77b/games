@@ -105,6 +105,7 @@ class PlayerBrick(pygame.sprite.Sprite):
 
     def move(self):  
         if self.keypressed:
+            self.vx += 0.01      # longer hold, faster
             self.x += self.vx
             self.pos = (self.x, self.y)
     
