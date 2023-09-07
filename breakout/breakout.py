@@ -42,11 +42,16 @@ class Ball(pygame.sprite.Sprite):
         pygame.draw.circle(self.surf, RED, (self.r, self.r), self.r)
         self.rect = self.surf.get_rect()
     
-    def hit(self):
+    def hitwall(self):
         if (self.x >= WIDTH-self.r*2) or (self.x <= 0):
             self.vx *= -1
         if (self.y >= HEIGHT-self.r*2) or (self.y <= 0):
             self.vy *= -1
+    
+    def hitplayer(self, p):
+        if (self.y+self.r*2) >= p.y :
+            if (self.x >= p.x) and ((self.x+self.r*2) <= (p.x + p.w)) :
+                self.vy *= -1
     
     def move(self):
         self.x += self.vx*self.dt
@@ -74,7 +79,6 @@ class Brick(pygame.sprite.Sprite):
             
     def drawme(self, screen):
         screen.blit(self.surf, self.pos)
-
 
 class PlayerBrick(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -105,9 +109,14 @@ class PlayerBrick(pygame.sprite.Sprite):
 
     def move(self):  
         if self.keypressed:
-            self.vx += 0.01      # longer hold, faster
-            self.x += self.vx
-            self.pos = (self.x, self.y)
+            if self.x < 0:
+                self.x = 0
+            elif self.x > WIDTH-self.w:
+                self.x = WIDTH-self.w
+            else:
+                self.vx *= 1.05      # longer hold, faster
+                self.x += self.vx
+                self.pos = (self.x, self.y)
     
     def drawme(self, screen):
         screen.blit(self.surf, self.pos)
@@ -140,8 +149,9 @@ while gameOn:
     
     player.move()
     # get ball collision with wall
-    ball.hit()
+    ball.hitwall()
     # move ball
+    ball.hitplayer(player)
     ball.dt = clock.tick(FPS)
     ball.move()
     
