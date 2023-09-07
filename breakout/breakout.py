@@ -75,8 +75,11 @@ gameOn = True
 X_POS = 200
 B_X   = 400
 B_Y   = 300
+V_X   = 1.2
+V_Y   = -0.3
 
 while gameOn:
+    # get key event
     for event in pygame.event.get():
         if event.type == KEYDOWN:
             if event.key == K_RIGHT:
@@ -87,7 +90,16 @@ while gameOn:
                 gameOn = False
         elif event.type == QUIT:
             gameOn = False
-
+    # calculate ball collision with wall
+    if (B_X >= WIDTH) or (B_X <= 0):
+        V_X *= -1
+    if (B_Y >= HEIGHT) or (B_Y <= 0):
+        V_Y *= -1
+    # calculate position of ball
+    dt = clock.tick(30)
+    B_X = B_X + V_X*dt
+    B_Y = B_Y + V_Y*dt
+    # draw anything
     screen.blit(background.surf, (0, 0))
     screen.blit(ball.surf, (B_X, B_Y))
     screen.blit(player.surf, (X_POS, HEIGHT-BRICK_H-10))
