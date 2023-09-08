@@ -62,8 +62,11 @@ class Ball(pygame.sprite.Sprite):
         screen.blit(self.surf, self.pos)
         
 class Brick(pygame.sprite.Sprite):
-    def __init__(self, hits=1):
+    def __init__(self, x, y, hits=1):
         super(Brick, self).__init__()
+        self.x = x
+        self.y = y
+        self.pos = (x,y)
         self.surf = pygame.Surface((BRICK_W, BRICK_H))
         self.hits = hits
         self.surf.fill(self.getcolor())
@@ -128,11 +131,14 @@ pygame.display.set_caption("Breakout")
 clock = pygame.time.Clock()
 
 background = Background()
+
 ball   = Ball(0.1, 0.3)
+
 player = PlayerBrick(X_POS, HEIGHT-BRICK_H-10)
-brick1 = Brick(3)
-brick2 = Brick(2)
-brick3 = Brick(1)
+bricks = []
+bricks.append(Brick(10,10, 3))
+bricks.append(Brick(200,50, 2))
+bricks.append(Brick(300,100, 1))
 
 gameOn = True
 
@@ -148,10 +154,10 @@ while gameOn:
             gameOn = False
     
     player.move()
-    # get ball collision with wall
+    # get ball collision 
     ball.hitwall()
-    # move ball
     ball.hitplayer(player)
+    # move ball
     ball.dt = clock.tick(FPS)
     ball.move()
     
@@ -159,9 +165,8 @@ while gameOn:
     screen.blit(background.surf, (0, 0))
     ball.drawme(screen)
     player.drawme(screen)
-    screen.blit(brick1.surf, (10, 10))
-    screen.blit(brick2.surf, (200, 50))
-    screen.blit(brick3.surf, (350, 100))
+    for b in bricks:
+        screen.blit(b.surf, b.pos)
     pygame.display.flip()
 
 # Quit Pygame
