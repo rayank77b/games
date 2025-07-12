@@ -1,7 +1,7 @@
 // === main.cpp ===
 #include "Game.h"
 
-int main(int argc, char* argv[]) {
+int main() {
     Game game;
 
     if (!game.init("Snake Game", 1000, 800)) 
