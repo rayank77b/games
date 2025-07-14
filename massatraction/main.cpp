@@ -6,6 +6,7 @@
 #include <ctime>
 #include <random>
 #include <algorithm>
+#include <cxxopts.hpp>
 
 const int WIDTH = 1200;
 const int HEIGHT = 1000;
@@ -119,27 +120,30 @@ void drawHistogram(SDL_Renderer* renderer, const std::vector<int>& histogram, in
 
 int main(int argc, char* argv[]) {
 
-    int bodies_count = 1000;
-    float G = 0.5f;   // Gravitationskonstante
-    bool reflexion_on = true;
+    cxxopts::Options options("massatraction", "A mass atraction simulation");
 
-    if (argc < 4) {
-        std::cerr<<"Usage: " << argv[0] << " bodies_count gravitation reflexion\n";
-        std::cerr<<"   bodies_count: 1 - 3000"<<endl;
-        std::cerr<<"   gravitation const: 0.1 - 10"<<endl;
-        std::cerr<<"   reflexion:  1 for on, 0 for off (default on)"<<endl;
-        return 1;
-    } 
+    options.add_options()
+        ("n,number", "Number of mass", cxxopts::value<int>()->default_value("1000"))
+        ("g,gravity", "Gravity constant", cxxopts::value<float>()->default_value("0.5"))
+        ("r,reflexion", "switch reflexion on border on", cxxopts::value<bool>()->default_value("false"))
+        ("i,histogramm", "show histogramm", cxxopts::value<bool>()->default_value("false"))
+        ("a,addmassiv", "add a massive object in center (number is the mass of the object)", cxxopts::value<int>()->default_value("10"))
+        ("h,help", "Show help");
 
-    try {
-        bodies_count = std::stoi(argv[1]);
-        G = std::stof(argv[2]);
-        if(std::stoi(argv[3])==0)
-            reflexion_on = false;
-    } catch (const std::exception& e) {
-        std::cerr << "Invalid input: " << e.what() << "\n";
-        return 1;
+    auto result = options.parse(argc, argv);
+
+    if (result.count("help")) {
+        std::cout << options.help();
+        return 0;
     }
+
+    int bodies_count = result["number"].as<int>();
+    float G = result["gravity"].as<float>(); 
+    bool reflexion_on = result["reflexion"].as<bool>();
+    bool histogramm_on = result["histogramm"].as<bool>();
+    int massive_mass = result["addmassiv"].as<int>();
+
+    std::cout<<"start with bodies count: "<<bodies_count<<std::endl;
 
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Window* window = SDL_CreateWindow("Mehr-Massen-Simulation mit Spuren", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
@@ -147,9 +151,14 @@ int main(int argc, char* argv[]) {
 
     std::srand(std::time(nullptr));
     
-    std::vector<Body> bodies = {
-        {{500,500},{0,0},100,{255,255,255,255}}
-    };
+    std::vector<Body> bodies;
+
+    Body bmassiv;
+    bmassiv.position = Vector2{WIDTH/2.0, HEIGHT/2.0};
+    bmassiv.velocity = Vector2{0.0, 0.0};
+    bmassiv.mass = massive_mass;
+    bmassiv.color = SDL_Color{255, 255, 255, 255};
+    bodies.push_back(bmassiv);
 
     for(int i=0; i<bodies_count; i++ ){
         float vx = randomFloatMinusHalfToHalf();
@@ -214,9 +223,10 @@ int main(int argc, char* argv[]) {
         }
 
         // draw histogram
-        std::vector<int> histogram = computeHistogram(bodies, MAXSPEED, binCount);
-        drawHistogram(renderer, histogram, 0, HEIGHT - histogramHeight, WIDTH, histogramHeight);
-
+        if(histogramm_on) {
+            std::vector<int> histogram = computeHistogram(bodies, MAXSPEED, binCount);
+            drawHistogram(renderer, histogram, 0, HEIGHT - histogramHeight, WIDTH, histogramHeight);
+        }
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
     }
