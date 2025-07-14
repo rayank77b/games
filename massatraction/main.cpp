@@ -39,6 +39,9 @@ struct Vector2 {
     float length() const {
         return std::sqrt(x * x + y * y);
     }
+    float distance(const Vector2& v) const {
+        return std::sqrt((v.x-x) * (v.x-x) + (v.y-y) * (v.y-y));
+    }
     Vector2 normalized() const {
         float len = length();
         return len > 0 ? Vector2{x / len, y / len} : Vector2{0, 0};
@@ -52,7 +55,7 @@ struct Body {
     SDL_Color color;
     void updateColorFromSpeed() {
         // Berechne Geschwindigkeit (Länge des Vektors)
-        float speed = std::sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+        float speed = velocity.length();
 
         // Normiere Geschwindigkeit in Bereich [0.0, 1.0] – z. B. maxSpeed = 5.0
         float t = clamp(speed / MAXSPEED, 0.0f, 1.0f);
@@ -67,6 +70,7 @@ struct Body {
 
         color = SDL_Color{r, g, b, a};
     }
+
 };
 
 float randomFloatMinusHalfToHalf() {
@@ -80,7 +84,7 @@ std::vector<int> computeHistogram(const std::vector<Body>& bodies, const float m
     std::vector<int> histogram(binCount, 0);
 
     for (const auto& body : bodies) {
-        float speed = std::sqrt(body.velocity.x * body.velocity.x + body.velocity.y * body.velocity.y);
+        float speed = body.velocity.length();
         int bin = std::min(static_cast<int>((speed / maxSpeed) * binCount), binCount - 1);
         histogram[bin]++;
     }
@@ -118,6 +122,37 @@ void drawHistogram(SDL_Renderer* renderer, const std::vector<int>& histogram, in
     }
 }
 
+void removeCloseBodies(std::vector<Body>& bodies, float minDistance) {
+    for (size_t i = 0; i < bodies.size(); ++i) {
+        for (size_t j = i + 1; j < bodies.size(); /* kein ++ */) {
+            float dist = bodies[i].position.distance(bodies[j].position);
+            if (dist < minDistance) {
+                float totalMass = bodies[i].mass + bodies[j].mass;
+                Vector2 newVelocity = {
+                    (bodies[i].velocity.x * bodies[i].mass + bodies[j].velocity.x * bodies[j].mass) / totalMass,
+                    (bodies[i].velocity.y * bodies[i].mass + bodies[j].velocity.y * bodies[j].mass) / totalMass
+                };
+                bodies[i].mass = totalMass;
+                bodies[i].velocity = newVelocity;
+                bodies.erase(bodies.begin() + j); // entferne b
+            } else {
+                ++j;
+            }
+        }
+    }
+}
+
+Vector2 computeTotalMomentum(const std::vector<Body>& bodies) {
+    Vector2 total = {0.0f, 0.0f};
+
+    for (const auto& body : bodies) {
+        total.x += body.velocity.x * body.mass;
+        total.y += body.velocity.y * body.mass;
+    }
+
+    return total;
+}
+
 int main(int argc, char* argv[]) {
 
     cxxopts::Options options("massatraction", "A mass atraction simulation");
@@ -128,6 +163,8 @@ int main(int argc, char* argv[]) {
         ("r,reflexion", "switch reflexion on border on", cxxopts::value<bool>()->default_value("false"))
         ("i,histogramm", "show histogramm", cxxopts::value<bool>()->default_value("false"))
         ("a,addmassiv", "add a massive object in center (number is the mass of the object)", cxxopts::value<int>()->default_value("10"))
+        ("m,merge", "switch on that mass will be merged", cxxopts::value<bool>()->default_value("false"))
+        ("d,mindistance", "mindistance it should have to calculate",cxxopts::value<float>()->default_value("10"))
         ("h,help", "Show help");
 
     auto result = options.parse(argc, argv);
@@ -142,8 +179,13 @@ int main(int argc, char* argv[]) {
     bool reflexion_on = result["reflexion"].as<bool>();
     bool histogramm_on = result["histogramm"].as<bool>();
     int massive_mass = result["addmassiv"].as<int>();
+    float mindistance = result["mindistance"].as<float>(); 
+    bool mass_merge = result["merge"].as<bool>();
 
     std::cout<<"start with bodies count: "<<bodies_count<<std::endl;
+    std::cout<<"min distance to calculate: "<<mindistance<<std::endl;
+    if(mass_merge)
+        std::cout<<"mass merge is activated"<<std::endl;
 
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Window* window = SDL_CreateWindow("Mehr-Massen-Simulation mit Spuren", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
@@ -158,7 +200,7 @@ int main(int argc, char* argv[]) {
     bmassiv.velocity = Vector2{0.0, 0.0};
     bmassiv.mass = massive_mass;
     bmassiv.color = SDL_Color{255, 255, 255, 255};
-    bodies.push_back(bmassiv);
+    bodies.push_back(bmassiv); 
 
     for(int i=0; i<bodies_count; i++ ){
         float vx = randomFloatMinusHalfToHalf();
@@ -178,6 +220,14 @@ int main(int argc, char* argv[]) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) running = false;
         }
+        
+        Vector2 p = computeTotalMomentum(bodies);
+        float magnitude = std::sqrt(p.x * p.x + p.y * p.y);
+        std::cout<<"\rbodies count: "<<bodies.size();
+        std::cout<<"  Gesamtimpuls: "<< magnitude<<std::flush;
+        // berechne ob massen zueiander zu nah sind und füge sie zusammen
+        if(mass_merge)
+            removeCloseBodies(bodies, mindistance);
 
         // Kräfte berechnen
         std::vector<Vector2> accelerations(bodies.size());
@@ -185,7 +235,7 @@ int main(int argc, char* argv[]) {
             for (size_t j = 0; j < bodies.size(); ++j) {
                 if (i == j) continue;
                 Vector2 dir = bodies[j].position - bodies[i].position;
-                float dist = std::max(dir.length(), 10.0f);
+                float dist = std::max(dir.length(), 5.0f); //mindistance);
                 Vector2 forceDir = dir.normalized();
                 float forceMag = G * bodies[i].mass * bodies[j].mass / (dist * dist);
                 Vector2 acc = forceDir * (forceMag / bodies[i].mass);
