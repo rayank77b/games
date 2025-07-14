@@ -11,6 +11,9 @@ const int WIDTH = 1200;
 const int HEIGHT = 1000;
 const float MAXSPEED = 20.0;
 
+const int histogramHeight = 100;
+const int binCount = 80;
+
 template<typename T>
 const T& clamp(const T& v, const T& lo, const T& hi) {
     return (v < lo) ? lo : (hi < v) ? hi : v;
@@ -72,7 +75,7 @@ float randomFloatMinusHalfToHalf() {
     return dist(gen);
 }
 
-std::vector<int> computeHistogram(const std::vector<Body>& bodies, float maxSpeed, int binCount) {
+std::vector<int> computeHistogram(const std::vector<Body>& bodies, const float maxSpeed, const int binCount) {
     std::vector<int> histogram(binCount, 0);
 
     for (const auto& body : bodies) {
@@ -86,9 +89,11 @@ std::vector<int> computeHistogram(const std::vector<Body>& bodies, float maxSpee
 
 void drawBody(SDL_Renderer* renderer, const Body& body) {
     // Körper zeichnen
-    SDL_SetRenderDrawColor(renderer, body.color.r, body.color.g, body.color.b, 255);
-    SDL_Rect rect = {(int)(body.position.x - 1), (int)(body.position.y - 1), 2, 2};
-    SDL_RenderFillRect(renderer, &rect);
+    if(body.position.x>=0 && body.position.y>=0 && body.position.x<=WIDTH && body.position.y<=HEIGHT) {
+        SDL_SetRenderDrawColor(renderer, body.color.r, body.color.g, body.color.b, 255);
+        SDL_Rect rect = {(int)(body.position.x - 1), (int)(body.position.y - 1), 2, 2};
+        SDL_RenderFillRect(renderer, &rect);
+    }
 }
 
 void drawHistogram(SDL_Renderer* renderer, const std::vector<int>& histogram, int x, int y, int width, int height) {
@@ -112,28 +117,25 @@ void drawHistogram(SDL_Renderer* renderer, const std::vector<int>& histogram, in
     }
 }
 
-void update(SDL_Renderer* renderer, const std::vector<Body>& bodies) {
-    const int histogramHeight = 100;
-
-    int binCount = 80;
-
-    std::vector<int> histogram = computeHistogram(bodies, MAXSPEED, binCount);
-    drawHistogram(renderer, histogram, 0, HEIGHT - histogramHeight, WIDTH, histogramHeight);
-}
-
 int main(int argc, char* argv[]) {
 
     int bodies_count = 1000;
     float G = 0.5f;   // Gravitationskonstante
+    bool reflexion_on = true;
 
-    if (argc < 3) {
-        std::cerr << "Usage: " << argv[0] << " bodies_count, gravitation\n";
+    if (argc < 4) {
+        std::cerr<<"Usage: " << argv[0] << " bodies_count gravitation reflexion\n";
+        std::cerr<<"   bodies_count: 1 - 3000"<<endl;
+        std::cerr<<"   gravitation const: 0.1 - 10"<<endl;
+        std::cerr<<"   reflexion:  1 for on, 0 for off (default on)"<<endl;
         return 1;
     } 
 
     try {
         bodies_count = std::stoi(argv[1]);
         G = std::stof(argv[2]);
+        if(std::stoi(argv[3])==0)
+            reflexion_on = false;
     } catch (const std::exception& e) {
         std::cerr << "Invalid input: " << e.what() << "\n";
         return 1;
@@ -187,27 +189,33 @@ int main(int argc, char* argv[]) {
             bodies[i].velocity += accelerations[i];
             bodies[i].position += bodies[i].velocity;
 
-            // Randreflexion
-            if (bodies[i].position.x < 5 || bodies[i].position.x > WIDTH - 5) {
-                bodies[i].velocity.x *= -1;
-                bodies[i].position.x = clamp(bodies[i].position.x, 5.0f, (float)(WIDTH - 5));
-            }
-            if (bodies[i].position.y < 5 || bodies[i].position.y > HEIGHT - 5) {
-                bodies[i].velocity.y *= -1;
-                bodies[i].position.y = clamp(bodies[i].position.y, 5.0f, (float)(HEIGHT - 5));
+            if(reflexion_on) {
+                // Randreflexion
+                if (bodies[i].position.x < 5 || bodies[i].position.x > WIDTH - 5) {
+                    bodies[i].velocity.x *= -1;
+                    bodies[i].position.x = clamp(bodies[i].position.x, 5.0f, (float)(WIDTH - 5));
+                }
+                if (bodies[i].position.y < 5 || bodies[i].position.y > HEIGHT - 5) {
+                    bodies[i].velocity.y *= -1;
+                    bodies[i].position.y = clamp(bodies[i].position.y, 5.0f, (float)(HEIGHT - 5));
+                }
             }
 
         }
 
+        // delete the screen
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
+        // draw bodies
         for (auto& body : bodies) {
             body.updateColorFromSpeed();
             drawBody(renderer, body);
         }
 
-        update(renderer, bodies);
+        // draw histogram
+        std::vector<int> histogram = computeHistogram(bodies, MAXSPEED, binCount);
+        drawHistogram(renderer, histogram, 0, HEIGHT - histogramHeight, WIDTH, histogramHeight);
 
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
