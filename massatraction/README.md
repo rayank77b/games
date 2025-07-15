@@ -1,12 +1,17 @@
-simple games in c++ (python)
+simple massatraction simulation
 
+A mass atraction simulation
+Usage:
+  massatraction [OPTION...]
 
-todo:
-1 - TicTacToe
-3 - PingPong
-5 - Space Invaders
-6 - Flappy Bird
-7 - Platformer
-8 - Astroid 
-9 - JumpAndRun
-10 - Shooter
+  -n, --number arg       Number of mass (default: 1000)
+  -g, --gravity arg      Gravity constant (default: 0.5)
+  -r, --reflexion        switch reflexion on border on
+  -i, --histogramm       show histogramm
+  -a, --addmassiv arg    add a massive object in center (number is the mass 
+                         of the object) (default: 10)
+  -m, --merge            switch on that mass will be merged
+  -d, --mindistance arg  mindistance it should have to calculate (default: 
+                         10)
+  -h, --help             Show help
+
