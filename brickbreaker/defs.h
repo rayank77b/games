@@ -1,4 +1,4 @@
-// === Brick.h ===
+// === defs.h ===
 #pragma once
 
 const int screen_width = 1000;

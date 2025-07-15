@@ -1,12 +1,19 @@
-# Makefile für SDL2 Mondlander
-CXX = g++
-CXXFLAGS = -Wall -std=c++14
-SRC = main.cpp
-OUT = massatraction
-PKG = sdl2 SDL2_ttf
+CXX = g++-14
+CXXFLAGS = -std=c++14 -Wall -Wextra -O2
+LDFLAGS = -lSDL2 -lSDL2_ttf
 
-all:
-	$(CXX) $(CXXFLAGS) -o $(OUT) $(SRC) $(shell pkg-config --cflags --libs $(PKG))
+SRC = Body.cpp Game.cpp main.cpp 
+OBJ = $(SRC:.cpp=.o)
+TARGET = massatraction
+
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+	$(CXX) $(OBJ) -o $@ $(LDFLAGS)
+	@echo "+ Build complete."
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OUT)
+	rm -f $(OBJ) $(TARGET)
