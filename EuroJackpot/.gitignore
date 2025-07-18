@@ -1,3 +1,8 @@
 *.o
 eurojackpot
 .vscode
+qt/*.o
+qt/EuroJackpot
+qt/moc_*
+qt/.qmake.stash
+qt/tips.csv
