@@ -5,13 +5,16 @@
 
 std::vector<int> generateNumbers(int count, int min, int max) {
     std::vector<int> pool;
+    // erzeuge zahlen von min bis max
     for (int i = min; i <= max; ++i)
         pool.push_back(i);
-
+    // initialisiere Random
     std::random_device rd;
     std::mt19937 gen(rd());
+    // vermische die zahlen shuffle
     std::shuffle(pool.begin(), pool.end(), gen);
 
+    // waehle erste count zahlne aus dem vector pool und liefere es als vector
     return std::vector<int>(pool.begin(), pool.begin() + count);
 }
 
