@@ -18,13 +18,8 @@ bool Game::init(const char* title, int width, int height) {
     snake.init(width / gridSize, height / gridSize);
     food.spawn(width / gridSize, height / gridSize);
 
-    if (TTF_Init() < 0) 
+    if (!textRenderer.init("Arial.ttf", 24))
         return false;
-    font = TTF_OpenFont("FreeSans.ttf", 24); // oder eine andere TTF im Ordner
-    if (!font) {
-        std::cout<<"cant load FreeSans.ttf"<<std::endl;
-        return false;
-    }
     score = 0;
 
     paused = true;
@@ -65,8 +60,14 @@ void Game::update() {
     if (paused) return; 
 
     snake.move();
-    if (snake.checkCollision()) 
-        running = false;
+    if (snake.checkCollision()) {
+        // Restart the game state
+        snake.init(screen_width / gridSize, screen_height / gridSize);
+        food.spawn(screen_width / gridSize, screen_height / gridSize);
+        score = 0;
+        paused = true;
+        return;
+    }
     if (snake.eats(food)) {
         do {
             food.spawn(screen_width / gridSize, screen_height / gridSize);
@@ -84,36 +85,21 @@ void Game::render() {
     // Score anzeigen
     SDL_Color white = {255, 255, 255, 255};
     std::string scoreText = "Score: " + std::to_string(score);
-    SDL_Surface* surface = TTF_RenderText_Blended(font, scoreText.c_str(), white);
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-
-    int textW, textH;
-    SDL_QueryTexture(texture, nullptr, nullptr, &textW, &textH);
-    SDL_Rect dstRect = {screen_width - textW - 10, 10, textW, textH};
-    SDL_RenderCopy(renderer, texture, nullptr, &dstRect);
+    // Render score at top right
+    textRenderer.renderText(renderer, scoreText, screen_width - 150, 10, white);
 
     if (paused) {
         SDL_Color yellow = {255, 255, 0, 255};
-        SDL_Surface* pauseSurf = TTF_RenderText_Blended(font, "PAUSED", yellow);
-        SDL_Texture* pauseTex = SDL_CreateTextureFromSurface(renderer, pauseSurf);
-        int tw, th;
-        SDL_QueryTexture(pauseTex, nullptr, nullptr, &tw, &th);
-        SDL_Rect dst = {screen_width/2 - tw / 2, screen_height/2 - th / 2, tw, th};
-        SDL_RenderCopy(renderer, pauseTex, nullptr, &dst);
-        SDL_FreeSurface(pauseSurf);
-        SDL_DestroyTexture(pauseTex);
+        // Render "PAUSED" at center
+        textRenderer.renderText(renderer, "PAUSED", screen_width/2 - 60, screen_height/2 - 20, yellow);
     }
 
     SDL_RenderPresent(renderer);
-
-    SDL_FreeSurface(surface);
-    SDL_DestroyTexture(texture);
 }
 
 void Game::clean() {
     std::cout<<"max score: "<<score<<std::endl;
-    TTF_CloseFont(font);
-    TTF_Quit();
+    textRenderer.clean();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

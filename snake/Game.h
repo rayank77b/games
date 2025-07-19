@@ -1,10 +1,10 @@
 // === Game.h ===
 #pragma once
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
 #include <string>
 #include "Snake.h"
 #include "Food.h"
+#include "TextRenderer.h"
 
 class Game {
 public:
@@ -27,7 +27,7 @@ private:
     int gridSize;
     int screen_width;
     int screen_height;
-    TTF_Font* font;
+    TextRenderer textRenderer;
     int score;
     bool paused;
 };
