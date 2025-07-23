@@ -118,14 +118,14 @@ float getGewin(std::vector<int> mainNumbers, std::vector<int> euroNumbers, std::
 int main(int argc, char ** argv) {
     bool simulation_on = false;
 
-    if(!(argc==1 || argc==3)) {
+    if(!(argc==1 || argc==4)) {
         std::cout<<"Usage: "<<argv[0]<<std::endl;
         std::cout<<"     for output 10 random numbers\n\n";
-        std::cout<<"       "<<argv[0]<<" numbers 1-50 and 1-12 coma separated\n";
-        std::cout<<"     example: "<<argv[0]<<" 3,12,34,41,44  7,8\n";
+        std::cout<<"       "<<argv[0]<<" numbers 1-50 and 1-12 coma separated and rounds to play\n";
+        std::cout<<"     example: "<<argv[0]<<" 3,12,34,41,44  7,8  1000\n";
         std::cout<<"       for simulatin a game\n\n";
         return 1;
-    } else if(argc==3)
+    } else if(argc==4)
         simulation_on = true;
 
     if(!simulation_on) {
@@ -134,7 +134,7 @@ int main(int argc, char ** argv) {
     }
 
     const float cost_pergame = 2.0; // 2.0 Euro per Box
-    const int GAMES_MAX = 1000000;
+    int GAMES_MAX = atoi(argv[3]);
 
     std::vector<int> mainNumbers = convert2vectorInt(argv[1]);
     std::vector<int> euroNumbers = convert2vectorInt(argv[2]);;
@@ -151,9 +151,11 @@ int main(int argc, char ** argv) {
     }
     sum = gewin + gezahlt;
 
-    std::cout<<"Gezahlt: "<<gezahlt<<" €"<<std::endl;
-    std::cout<<"Gewin: "<<gewin<<" €"<<std::endl;
-    std::cout<<"SUME: "<<sum<<" €"<<std::endl;
+    std::cout<<"Gespielt "<<GAMES_MAX<<" Runden\n";
+    std::cout<<"Gezahlt: "<<gezahlt/1000<<" t€\n";
+    std::cout<<"Gewin: "<<gewin/1000<<" t€\n";
+    std::cout<<"SUME: "<<sum/1000<<" t€\n";
+    std::cout<<"percent Gewin: "<<-gewin/gezahlt*100<<" %\n";
 
     return 0;
 }
