@@ -1,10 +1,12 @@
 #pragma once
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include <vector>
+#include <string>
 #include "Enemy.h"
 #include "Tower.h"
 #include "Bullet.h"
-#include <SDL2/SDL_ttf.h>
+
 
 class Game {
 public:
@@ -20,6 +22,7 @@ private:
     void update();
     void render();
     void spawnEnemy();
+    void writeText(std::string& txt, SDL_Color& color,const int x,const int y);
     void renderStats();
 
     SDL_Window*   window_;

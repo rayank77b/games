@@ -1,13 +1,17 @@
-#include "Tower.h"
-#include "Config.h"
 #include <cmath>
 #include <iostream>
+#include <limits>
+#include <cmath>
+
+#include "Tower.h"
+#include "Config.h"
 
 Tower::Tower(int x, int y) : x_(x), y_(y), health_(TOWER_HEALTH), lastShotTime_(0) {
         globalID++;
         id_ = globalID;
 }
 
+/*
 void Tower::update(const std::vector<Enemy>& enemies,
                    std::vector<Bullet>& bullets)
 {
@@ -15,6 +19,41 @@ void Tower::update(const std::vector<Enemy>& enemies,
     // Ziel: erster Enemy in der Liste
     // TOFIX: erster Enemy in der Nähe schiessen
     bullets.push_back(shootAt(enemies.front()));
+}
+    */
+
+void Tower::update(const std::vector<Enemy>& enemies,
+                   std::vector<Bullet>& bullets)
+{
+    if (health_ <= 0 || enemies.empty() || !canShoot()) return;
+
+    // Mittelpunkt des Towers
+    float tx = x_ + TOWER_SIZE/2.0f;
+    float ty = y_ + TOWER_SIZE/2.0f;
+
+    // Suche nach dem nächsten Enemy
+    const Enemy* nearest = nullptr;
+    float minDist2 = std::numeric_limits<float>::max();
+
+    for (const auto& e : enemies) {
+        // Mittelpunkt des Enemys
+        float ex = e.getX() + ENEMY_SIZE/2.0f;
+        float ey = e.getY() + ENEMY_SIZE/2.0f;
+        float dx = ex - tx;
+        float dy = ey - ty;
+        float dist2 = dx*dx + dy*dy;
+
+        if (dist2 < minDist2) {
+            minDist2 = dist2;
+            nearest  = &e;
+        }
+    }
+
+    // Auf den nächsten Enemy schießen
+    if (nearest) {
+        bullets.push_back(shootAt(*nearest));
+        // shootAt() setzt lastShotTime_ intern
+    }
 }
 
 void Tower::draw(SDL_Renderer* renderer) const {

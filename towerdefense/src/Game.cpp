@@ -228,38 +228,32 @@ void Game::update() {
     );
 }
 
+void Game::writeText(std::string& txt, SDL_Color& color,const int x,const int y) {
+    SDL_Surface* surf = TTF_RenderText_Blended(font_, txt.c_str(), color);
+    SDL_Texture* tex  = SDL_CreateTextureFromSurface(renderer_, surf);
+    SDL_Rect dst{x, y, surf->w, surf->h};
+    SDL_FreeSurface(surf);
+    SDL_RenderCopy(renderer_, tex, nullptr, &dst);
+    SDL_DestroyTexture(tex);
+}
+
 void Game::renderStats() {
     // Score oben links
     SDL_Color black = {0,0,0,255};
     std::string txt = "Score: " + std::to_string(score_) + " Money: " + std::to_string(playMoney_);
-    SDL_Surface* surf = TTF_RenderText_Blended(font_, txt.c_str(), black);
-    SDL_Texture* tex  = SDL_CreateTextureFromSurface(renderer_, surf);
-    SDL_Rect dst{10, 10, surf->w, surf->h};
-    SDL_FreeSurface(surf);
-    SDL_RenderCopy(renderer_, tex, nullptr, &dst);
-    SDL_DestroyTexture(tex);
+    writeText(txt, black, 10, 10);
 
     if (paused_) {
         // Render "PAUSED" at center
         SDL_Color yellow = {255, 255, 0, 255};
         std::string txt = "PAUSE";
-        SDL_Surface* surf = TTF_RenderText_Blended(fontBig_, txt.c_str(), yellow);
-        SDL_Texture* tex  = SDL_CreateTextureFromSurface(renderer_, surf);
-        SDL_Rect dst{SCREEN_WIDTH/2-60, SCREEN_HEIGHT/2, surf->w, surf->h};
-        SDL_FreeSurface(surf);
-        SDL_RenderCopy(renderer_, tex, nullptr, &dst);
-        SDL_DestroyTexture(tex);
+        writeText(txt, yellow, SCREEN_WIDTH/2-60, SCREEN_HEIGHT/2);
     }
     if (gameover_) {
-        // Render "PAUSED" at center
+        // Render "Gameover" at center
         SDL_Color red = {255, 0, 0, 255};
         std::string txt = "Game Over   quit the game";
-        SDL_Surface* surf = TTF_RenderText_Blended(fontBig_, txt.c_str(), red);
-        SDL_Texture* tex  = SDL_CreateTextureFromSurface(renderer_, surf);
-        SDL_Rect dst{SCREEN_WIDTH/2-60, SCREEN_HEIGHT/2, surf->w, surf->h};
-        SDL_FreeSurface(surf);
-        SDL_RenderCopy(renderer_, tex, nullptr, &dst);
-        SDL_DestroyTexture(tex);
+        writeText(txt, red, SCREEN_WIDTH/2-60, SCREEN_HEIGHT/2);
     }
 }
 
