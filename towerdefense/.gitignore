@@ -2,3 +2,4 @@ tower_defense
 .vscode
 src/*.o
 src/*.d
+score.txt

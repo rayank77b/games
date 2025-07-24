@@ -25,6 +25,9 @@ private:
     void writeText(std::string& txt, SDL_Color& color,const int x,const int y);
     void renderStats();
 
+    bool loadScore(const std::string& path = "score.txt");
+    bool saveScore(const std::string& path = "score.txt") const;
+
     SDL_Window*   window_;
     SDL_Renderer* renderer_;
     TTF_Font*     font_;
@@ -42,4 +45,5 @@ private:
     int    playMoney_;
     bool   paused_;
     bool   gameover_;
+    int    scoreMax_;
 };

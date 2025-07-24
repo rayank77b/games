@@ -18,8 +18,9 @@ public:
 
     void damage(int amount);
     int  getHealth() const;
+    void setHealth(int h);
 
-    int getX() const;  // für Kollision
+    int getX() const;
     int getY() const;
 
     Uint32 getID() const;
@@ -28,8 +29,8 @@ private:
     bool canShoot() const;
     Bullet shootAt(const Enemy& e);
 
-    int x_, y_;
-    int     health_;
+    int    x_, y_;
+    int    health_;
     Uint32 lastShotTime_;
     Uint32 id_;
 };

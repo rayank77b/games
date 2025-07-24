@@ -1,10 +1,13 @@
-#include "Game.h"
-#include "Config.h"
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_rect.h> 
+
 #include <algorithm>
 #include <cstdlib>
 #include <string>
-#include <SDL2/SDL_ttf.h>
-#include <SDL2/SDL_rect.h> 
+#include <fstream> 
+
+#include "Game.h"
+#include "Config.h"
 
 Game::Game()
  : window_(nullptr), renderer_(nullptr),
@@ -43,6 +46,9 @@ bool Game::init(const char* title) {
     gameover_      = false;
     std::srand(static_cast<unsigned>(lastSpawnTime_));
     
+    // load max score
+    loadScore();
+
     return true;
 }
 
@@ -62,6 +68,9 @@ void Game::cleanUp() {
     if (renderer_) SDL_DestroyRenderer(renderer_);
     if (window_)   SDL_DestroyWindow(window_);
     SDL_Quit();
+
+    scoreMax_ = score_;
+    saveScore();
 }
 
 void Game::handleEvents() {
@@ -89,20 +98,23 @@ void Game::handleEvents() {
 
                 // prüfen, ob's überschneidet
                 bool overlap = false;
-                for (const auto& tower : towers_) {
+                for (auto& tower : towers_) {
                     SDL_Rect existing{ tower.getX(), tower.getY(), TOWER_SIZE, TOWER_SIZE };
                     if (SDL_HasIntersection(&newTowerRect, &existing)) {
                         overlap = true;
+                        if(playMoney_>=COST_PER_UPGRADE) { // prueba upgrade
+                            tower.setHealth(TOWER_HEALTH);
+                            playMoney_ -= COST_PER_UPGRADE;
+                        }
                         break;
                     }
                 }
-
                 // nur erstellen, wenn keine Kollision
                 if (!overlap) {
                     towers_.emplace_back(tx, ty);
                     playMoney_ -= COST_PER_BUILD;
+                    
                 }
-                
             }
         }
     }
@@ -153,7 +165,8 @@ void Game::update() {
     // Enemy erreicht rechten Rand → Escape
     for (auto& e : enemies_) {
         if (e.getX() > SCREEN_WIDTH) {
-            score_ += SCORE_PER_ESCAPE;
+            //score_ += SCORE_PER_ESCAPE;
+            gameover_ = true;
         }
     }
 
@@ -252,8 +265,13 @@ void Game::renderStats() {
     if (gameover_) {
         // Render "Gameover" at center
         SDL_Color red = {255, 0, 0, 255};
-        std::string txt = "Game Over   quit the game";
-        writeText(txt, red, SCREEN_WIDTH/2-60, SCREEN_HEIGHT/2);
+        std::string txt = "Game Over  Score: " + std::to_string(score_);
+        if(score_ < scoreMax_) {
+            txt += " Fail last max Score was " + std::to_string(scoreMax_);
+        } else {
+            txt += " Hurra new max Score, last was " + std::to_string(scoreMax_);
+        }
+        writeText(txt, red, SCREEN_WIDTH/2-160, SCREEN_HEIGHT/2);
     }
 }
 
@@ -269,4 +287,27 @@ void Game::render() {
     renderStats();
 
     SDL_RenderPresent(renderer_);
+}
+
+bool Game::loadScore(const std::string& path) {
+    std::ifstream in(path);
+    if (!in.is_open()) {
+        scoreMax_ = 0;          // Datei nicht gefunden: Score 0
+        return false;
+    }
+    in >> scoreMax_;            // liest eine ganze Zahl
+    if (in.fail()) {
+        scoreMax_ = 0;          // fehlerhafte Datei: Score 0
+        return false;
+    }
+    return true;
+}
+
+bool Game::saveScore(const std::string& path) const {
+    std::ofstream out(path, std::ofstream::trunc);
+    if (!out.is_open()) {
+        return false;        // konnte nicht öffnen
+    }
+    out << scoreMax_;           // schreibt den Score als Zahl
+    return out.good();
 }
