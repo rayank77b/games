@@ -25,6 +25,7 @@ private:
     SDL_Window*   window_;
     SDL_Renderer* renderer_;
     TTF_Font*     font_;
+    TTF_Font*     fontBig_;
     bool          running_;
 
     std::vector<Enemy>  enemies_;
@@ -36,4 +37,6 @@ private:
     Uint32 lastMoneyTime_;
     int    score_;
     int    playMoney_;
+    bool   paused_;
+    bool   gameover_;
 };

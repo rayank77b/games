@@ -6,7 +6,6 @@
 Tower::Tower(int x, int y) : x_(x), y_(y), health_(TOWER_HEALTH), lastShotTime_(0) {
         globalID++;
         id_ = globalID;
-        std::cout << "Tower id: " << id_ << "\n";
 }
 
 void Tower::update(const std::vector<Enemy>& enemies,

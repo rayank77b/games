@@ -8,7 +8,7 @@
 
 Game::Game()
  : window_(nullptr), renderer_(nullptr),
-   font_(nullptr), running_(false), 
+   font_(nullptr), fontBig_(nullptr), running_(false), 
    lastSpawnTime_(0), lastMoneyTime_(0),
    score_(0), playMoney_(20)
 {}
@@ -23,6 +23,8 @@ bool Game::init(const char* title) {
     if (TTF_Init() < 0) return false;                          // SDL_ttf
     font_ = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 18);
     if (!font_) return false;
+    fontBig_ = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 30);
+    if (!fontBig_) return false;
 
     window_ = SDL_CreateWindow(
         title,
@@ -37,7 +39,10 @@ bool Game::init(const char* title) {
     lastSpawnTime_ = SDL_GetTicks();
     spawnInterval_ = ENEMY_SPAWN_INTERVAL;
     running_       = true;
+    paused_        = false;
+    gameover_      = false;
     std::srand(static_cast<unsigned>(lastSpawnTime_));
+    
     return true;
 }
 
@@ -52,6 +57,7 @@ void Game::run() {
 
 void Game::cleanUp() {
     if (font_)     TTF_CloseFont(font_);
+    if (fontBig_)     TTF_CloseFont(fontBig_);
     TTF_Quit(); 
     if (renderer_) SDL_DestroyRenderer(renderer_);
     if (window_)   SDL_DestroyWindow(window_);
@@ -63,12 +69,19 @@ void Game::handleEvents() {
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT) {
             running_ = false;
-        }
-        else if (e.type == SDL_MOUSEBUTTONDOWN) {
+        } else if (e.type == SDL_KEYDOWN) {
+            switch (e.key.keysym.sym) {
+                case SDLK_SPACE:
+                    if(!gameover_) paused_ = !paused_;
+                    break;
+                default:
+                    break;
+            }
+        } else if (e.type == SDL_MOUSEBUTTONDOWN) {
             int mx, my;
             SDL_GetMouseState(&mx, &my);
 
-            if(playMoney_>=2){
+            if(playMoney_>=COST_PER_BUILD){
                 // gewünschte Turm-Position
                 int tx = mx - TOWER_SIZE/2;
                 int ty = my - TOWER_SIZE/2;
@@ -87,7 +100,7 @@ void Game::handleEvents() {
                 // nur erstellen, wenn keine Kollision
                 if (!overlap) {
                     towers_.emplace_back(tx, ty);
-                    playMoney_ -= 2;
+                    playMoney_ -= COST_PER_BUILD;
                 }
                 
             }
@@ -101,6 +114,11 @@ void Game::spawnEnemy() {
 }
 
 void Game::update() {
+
+    if(score_<SCORE_GAME_OVER) gameover_ = true;
+    if(gameover_) return;
+    if (paused_) return; 
+
     Uint32 now = SDL_GetTicks();
     if (now - lastSpawnTime_ > spawnInterval_) {
         spawnEnemy();
@@ -220,6 +238,29 @@ void Game::renderStats() {
     SDL_FreeSurface(surf);
     SDL_RenderCopy(renderer_, tex, nullptr, &dst);
     SDL_DestroyTexture(tex);
+
+    if (paused_) {
+        // Render "PAUSED" at center
+        SDL_Color yellow = {255, 255, 0, 255};
+        std::string txt = "PAUSE";
+        SDL_Surface* surf = TTF_RenderText_Blended(fontBig_, txt.c_str(), yellow);
+        SDL_Texture* tex  = SDL_CreateTextureFromSurface(renderer_, surf);
+        SDL_Rect dst{SCREEN_WIDTH/2-60, SCREEN_HEIGHT/2, surf->w, surf->h};
+        SDL_FreeSurface(surf);
+        SDL_RenderCopy(renderer_, tex, nullptr, &dst);
+        SDL_DestroyTexture(tex);
+    }
+    if (gameover_) {
+        // Render "PAUSED" at center
+        SDL_Color red = {255, 0, 0, 255};
+        std::string txt = "Game Over   quit the game";
+        SDL_Surface* surf = TTF_RenderText_Blended(fontBig_, txt.c_str(), red);
+        SDL_Texture* tex  = SDL_CreateTextureFromSurface(renderer_, surf);
+        SDL_Rect dst{SCREEN_WIDTH/2-60, SCREEN_HEIGHT/2, surf->w, surf->h};
+        SDL_FreeSurface(surf);
+        SDL_RenderCopy(renderer_, tex, nullptr, &dst);
+        SDL_DestroyTexture(tex);
+    }
 }
 
 void Game::render() {
