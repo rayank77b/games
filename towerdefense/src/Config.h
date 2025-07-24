@@ -23,3 +23,4 @@ constexpr Uint32 TIME_TO_MONEY        = 1000;  // ms
 // Scoring
 constexpr int SCORE_PER_KILL          =  10;
 constexpr int SCORE_PER_ESCAPE        = -5;
+constexpr int SCORE_PER_TOWER_HIT     = -1;

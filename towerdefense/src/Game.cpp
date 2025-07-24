@@ -68,7 +68,7 @@ void Game::handleEvents() {
             int mx, my;
             SDL_GetMouseState(&mx, &my);
 
-            if(playMoney_>=5){
+            if(playMoney_>=2){
                 // gewünschte Turm-Position
                 int tx = mx - TOWER_SIZE/2;
                 int ty = my - TOWER_SIZE/2;
@@ -87,7 +87,7 @@ void Game::handleEvents() {
                 // nur erstellen, wenn keine Kollision
                 if (!overlap) {
                     towers_.emplace_back(tx, ty);
-                    playMoney_ -= 5;
+                    playMoney_ -= 2;
                 }
                 
             }
@@ -139,6 +139,18 @@ void Game::update() {
         }
     }
 
+    // entferne aus dem Bild gefallene Kugeln
+    bullets_.erase(
+      std::remove_if(
+        bullets_.begin(), bullets_.end(),
+        [](const Bullet& b){
+          return b.getX()<0 || b.getX()>SCREEN_WIDTH
+              || b.getY()<0 || b.getY()>SCREEN_HEIGHT;
+        }
+      ),
+      bullets_.end()
+    );
+
     // entferne zerstörte oder entkommene Gegner
     enemies_.erase(
       std::remove_if(
@@ -161,22 +173,32 @@ void Game::update() {
             {
                 t.damage(1);
                 e.damage(ENEMY_HEALTH); // Enemy nach Kontakt “sterben”
+                score_ += SCORE_PER_TOWER_HIT;
                 break;
             }
         }
     }
 
-    // entferne aus dem Bild gefallene Kugeln
-    bullets_.erase(
-      std::remove_if(
-        bullets_.begin(), bullets_.end(),
-        [](const Bullet& b){
-          return b.getX()<0 || b.getX()>SCREEN_WIDTH
-              || b.getY()<0 || b.getY()>SCREEN_HEIGHT;
+    // Bullet vs. Tower Collision: deactivate bullet on hit
+    for (auto& b : bullets_) {
+        // Erstelle das Rechteck der Bullet
+        SDL_Rect bulletRect{
+            static_cast<int>(b.getX()),
+            static_cast<int>(b.getY()),
+            BULLET_SIZE,
+            BULLET_SIZE
+        };
+        // TOFIX: BUG some bullets pass 
+        for (auto& t : towers_) {
+            if (t.getHealth() <= 0) continue;  // toter Turm -> überspringen
+            if (t.getID() == b.getID() ) continue; // eigene Kugel ueberspringen
+            SDL_Rect towerRect{ t.getX(), t.getY(), TOWER_SIZE, TOWER_SIZE };
+            if (SDL_HasIntersection(&bulletRect, &towerRect)) {
+                b.deactivate();  // verschiebe Bullet aus dem Bildschirm
+                break;           // nicht mehrfach deaktivieren
+            }
         }
-      ),
-      bullets_.end()
-    );
+    }
 
     // entferne zerstörte Türme
     towers_.erase(

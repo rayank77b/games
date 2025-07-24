@@ -1,8 +1,8 @@
 #include "Bullet.h"
 #include "Config.h"
 
-Bullet::Bullet(float x, float y, float dx, float dy)
- : x_(x), y_(y), dx_(dx), dy_(dy), speed_(5.0f) {}
+Bullet::Bullet(float x, float y, float dx, float dy, Uint32 id)
+ : x_(x), y_(y), dx_(dx), dy_(dy), id_(id),  speed_(5.0f) {}
 
 void Bullet::update() {
     x_ += dx_ * speed_;
@@ -21,3 +21,4 @@ void Bullet::deactivate() {
 
 float Bullet::getX() const { return x_; }
 float Bullet::getY() const { return y_; }
+Uint32 Bullet::getID() const { return id_; }
