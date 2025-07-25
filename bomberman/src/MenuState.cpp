@@ -6,7 +6,7 @@
 
 void MenuState::handleEvent(Game& g, const SDL_Event& e) {
     if (e.type == SDL_EVENT_KEY_DOWN && e.key.key== SDLK_SPACE) {
-        g.changeState(Game::State::Playing);
+        g.changeState(Game::StateID::Playing);
     }
 }
 

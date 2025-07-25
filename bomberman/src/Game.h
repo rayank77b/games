@@ -15,6 +15,7 @@ public:
     ~Game();
     bool init();
     void cleanup();
+    void requestQuit();
 
     // Aufruf durch App‑Callbacks
     SDL_AppResult onEvent(SDL_Event*);
@@ -26,6 +27,12 @@ public:
     Config&       getConfig();
     int           getScore() const;
     void          addScore(int);
+
+    int  w() const;
+    int  h() const;
+
+    int  getHighScore() const;
+
 private:
     void loadHighScore();
     void saveHighScore();
@@ -37,5 +44,8 @@ private:
     std::unique_ptr<GameState> state_;
     StateID               curState_;
     bool                  quit_;
+    
+    int            screenW_, screenH_;
+
     int                   score_, highScore_;
 };

@@ -6,13 +6,14 @@
 
 void GameOverState::handleEvent(Game& g, const SDL_Event& e) {
     if (e.type == SDL_EVENT_KEY_DOWN) {
-        if (e.key.key == SDLK_R) g.changeState(Game::State::Menu);
+        if (e.key.key == SDLK_R) g.changeState(Game::StateID ::Menu);
         if (e.key.key == SDLK_Q) g.requestQuit();
     }
 }
 
 void GameOverState::update(Game& g, float dt) {
-    // …
+    // Im GameOver‑State gibt es keine laufenden Updates:
+    // Warten auf Eingabe im handleEvent() (R oder Q).
 }
 
 void GameOverState::render(Game& g, SDL_Renderer* r) {

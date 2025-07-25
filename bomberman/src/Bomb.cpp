@@ -23,11 +23,11 @@ void Bomb::render(SDL_Renderer* r) {
     if (hasExploded_) return;
 
     // Bombenkörper (dunkel)
-    SDL_Rect body{
-        int(x_ + tileSize_ * 0.1f),
-        int(y_ + tileSize_ * 0.1f),
-        int(tileSize_ * 0.8f),
-        int(tileSize_ * 0.8f)
+    SDL_FRect body{
+        x_ + tileSize_ * 0.1f,
+        y_ + tileSize_ * 0.1f,
+        tileSize_ * 0.8f,
+        tileSize_ * 0.8f
     };
     SDL_SetRenderDrawColor(r, 50, 50, 50, 255);
     SDL_RenderFillRect(r, &body);
@@ -36,7 +36,7 @@ void Bomb::render(SDL_Renderer* r) {
     int cx = int(x_ + tileSize_ / 2);
     int cy = int(y_);
     SDL_SetRenderDrawColor(r, 200, 50, 50, 255);
-    SDL_RenderDrawLine(
+    SDL_RenderLine(
         r,
         cx, cy,
         cx, cy - int(tileSize_ * 0.3f)

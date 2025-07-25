@@ -9,16 +9,20 @@ Game::Game()
    curState_(StateID::Menu),
    quit_(false), score_(0), highScore_(0) {}
 
+Game::~Game() {
+    // sorgt dafür, dass cleanup() im Destruktor aufgerufen wird
+    cleanup();
+}
+
 bool Game::init() {
     if (!cfg_.load("config.ini")) return false;
     int w = cfg_.getInt("ScreenWidth",1200);
     int h = cfg_.getInt("ScreenHeight",1000);
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) return false;
-    if (TTF_Init() < 0)               return false;
+    if (!SDL_Init(SDL_INIT_VIDEO)) return false;
+    if (!TTF_Init())               return false;
 
     win_ = SDL_CreateWindow("Bomberman",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         w, h, 0);
     if (!win_) return false;
 
@@ -39,6 +43,10 @@ void Game::cleanup() {
     if (win_)    SDL_DestroyWindow(win_);
     SDL_Quit();
 }
+void Game::requestQuit() { quit_ = true; }
+
+int Game::w() const { return screenW_; }
+int Game::h() const { return screenH_; }
 
 SDL_AppResult Game::onEvent(SDL_Event* e) {
     if (e->type == SDL_EVENT_QUIT) {
@@ -78,9 +86,14 @@ void Game::loadHighScore() {
     std::ifstream in("score.txt");
     if (!(in>>highScore_)) highScore_ = 0;
 }
+
 void Game::saveHighScore() {
     if (score_ > highScore_) {
         std::ofstream out("score.txt", std::ofstream::trunc);
         out<<score_;
     }
+}
+
+int  Game::getHighScore() const {
+    return highScore_;
 }

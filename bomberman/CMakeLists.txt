@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
-find_package(SDL3 REQUIRED)
-find_package(SDL3_ttf REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
+find_package(SDL3_ttf CONFIG REQUIRED)
 
 include_directories(
   ${SDL3_INCLUDE_DIRS}
@@ -22,7 +22,9 @@ file(GLOB SRC
 )
 
 add_executable(bomberman ${SRC})
-target_link_libraries(bomberman
-  ${SDL3_LIBRARIES}
-  ${SDL3_TTF_LIBRARIES}
+
+target_link_libraries(bomberman 
+  PRIVATE 
+    SDL3::SDL3
+    SDL3_ttf::SDL3_ttf 
 )

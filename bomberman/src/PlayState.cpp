@@ -9,7 +9,7 @@ static float tileToPixel(int t, float tileSize) {
 }
 
 PlayState::PlayState()
- : player_(0,0,0,0)   // wird in init deferred
+ : player_(0,0,0,0,0)   // wird in init deferred
  , map_()
  , lastEnemySpawn_(0)
  , initialized_(false)
@@ -17,11 +17,11 @@ PlayState::PlayState()
 
 void PlayState::handleEvent(Game& game, const SDL_Event& e) {
     if (e.type == SDL_EVENT_KEY_DOWN) {
-        switch (e.key.keysym.sym) {
-        case SDLK_p:
+        switch (e.key.key) {
+        case SDLK_P:
             game.changeState(Game::StateID::Menu);
             return;
-        case SDLK_q:
+        case SDLK_Q:
             game.requestQuit();
             return;
         case SDLK_SPACE:
@@ -81,7 +81,7 @@ void PlayState::update(Game& game, float delta) {
         ex.update(delta);
         // Kollision Explosion vs. weiche Blöcke
         for (auto& blk : map_.getSoftBlocks()) {
-            if (!blk.destroyed() && ex.intersects(blk.getBounds())) {
+            if (!blk.destroyed && ex.intersects(blk.getBounds())) {
                 blk.destroy();
                 game.addScore(10);
                 // ggf. Power‑up spawn via map_.spawnPowerUp(...)
@@ -179,7 +179,7 @@ void PlayState::render(Game& game, SDL_Renderer* r) {
         game.getFont(), txt.c_str(), 0, white);
     SDL_Texture* tex = SDL_CreateTextureFromSurface(r, surf);
     SDL_FRect dstF{10.f, 10.f, float(surf->w), float(surf->h)};
-    SDL_FreeSurface(surf);
+    SDL_DestroySurface(surf);
     SDL_RenderTexture(r, tex, nullptr, &dstF);
     SDL_DestroyTexture(tex);
 }
