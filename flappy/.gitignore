@@ -1,0 +1,13 @@
+# Build artifacts
+*.o
+*.d
+flappy
+
+# Highscore (wird lokal gepflegt)
+score.txt
+
+# Backup / Temp
+*~
+tmp 
+tmp/*
+.vscode
