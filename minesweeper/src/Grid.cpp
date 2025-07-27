@@ -2,16 +2,20 @@
 #include <iostream>
 #include <random>
 #include <algorithm> // for std::shuffle
+#include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
-Grid::Grid(int rows, int cols, int windowWidth, int windowHeight)
+Grid::Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f)
     : rows_(rows), cols_(cols)
 {
+    font = f;
     cellWidth_  = windowWidth / cols_;
     cellHeight_ = windowHeight / rows_;
 
     cells_.resize(rows_, std::vector<Cell>(cols_));
 
     placeMines(DEFAULT_MINE_COUNT);
+    computeAdjacency();
 }
 
 void Grid::draw(SDL_Renderer* renderer) {
@@ -39,7 +43,10 @@ void Grid::draw(SDL_Renderer* renderer) {
         }
     }
 
+    drawNumbers(renderer);
+
     // draw grid on top
+    // vertical lines
     SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
     for (int c = 0; c <= cols_; ++c) {
         int x = c * cellWidth_;
@@ -51,8 +58,6 @@ void Grid::draw(SDL_Renderer* renderer) {
         int y = r * cellHeight_;
         SDL_RenderLine(renderer, 0, y, cols_ * cellWidth_, y);
     }
-
-    
 }
 
 void Grid::handleClick(int x, int y) {
@@ -62,7 +67,13 @@ void Grid::handleClick(int x, int y) {
         Cell& cell = cells_[row][col];
         if (!cell.isRevealed) {
             cell.isRevealed = true;
-            std::cout << "Revealed cell: (" << row << ", " << col << ")\n";
+            std::cout << "Revealed (" << row << ", " << col << ")";
+            if (cell.hasMine) {
+                std::cout << " → 💣 BOOM";
+            } else {
+                std::cout << " → " << cell.adjacentMines << " nearby mine(s)";
+            }
+            std::cout << '\n';
         }
     }
 }
@@ -85,4 +96,82 @@ void Grid::placeMines(int mineCount) {
     }
 
     std::cout << "Mines placed: " << std::min(mineCount, (int)positions.size()) << '\n';
+}
+
+void Grid::computeAdjacency() {
+    const int dx[] = { -1, 0, 1, -1, 0, 1, -1, 1 };
+    const int dy[] = { -1, -1, -1, 0, 0, 0, 1, 1 };
+
+    for (int r = 0; r < rows_; ++r) {
+        for (int c = 0; c < cols_; ++c) {
+            if (cells_[r][c].hasMine) continue;
+
+            int count = 0;
+            for (int i = 0; i < 8; ++i) {
+                int nr = r + dy[i];
+                int nc = c + dx[i];
+                if (nr >= 0 && nr < rows_ && nc >= 0 && nc < cols_) {
+                    if (cells_[nr][nc].hasMine) {
+                        ++count;
+                    }
+                }
+            }
+
+            cells_[r][c].adjacentMines = count;
+        }
+    }
+}
+
+void Grid::drawNumbers(SDL_Renderer* renderer) {
+    SDL_Color textColor = {0, 0, 0, 255};  // black
+
+    std::string text = "Blub blub";
+    SDL_Color fg = {0,0,0, 255};
+
+    SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), text.length(), fg);
+    //if (!surface) 
+    //    SDL_Log("Failed to load surface: %s", SDL_GetError());
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_free(surface);
+
+    float texW = 0, texH = 0;
+    SDL_GetTextureSize(texture, &texW, &texH);
+    SDL_FRect dst = { 10, 10, texW, texH };
+    SDL_RenderTexture(renderer, texture, nullptr, &dst);
+    SDL_DestroyTexture(texture);
+
+    for (int r = 0; r < rows_; ++r) {
+        for (int c = 0; c < cols_; ++c) {
+            const Cell& cell = cells_[r][c];
+            
+            //if (cell.isRevealed && !cell.hasMine && cell.adjacentMines > 0) {
+            if (!cell.hasMine && cell.adjacentMines > 0) {
+                
+                std::string text = std::to_string(cell.adjacentMines);
+
+                SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), text.size(), textColor);
+                if (!surface) {
+                    //SDL_Log("Failed to load surface: %s", SDL_GetError());
+                    continue;
+                }
+                SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+                SDL_free(surface);
+                if (!texture) continue;
+
+                float texW = 0, texH = 0;
+                SDL_GetTextureSize(texture, &texW, &texH);
+
+
+                SDL_FRect dst {
+                    static_cast<float>(c * cellWidth_ + cellWidth_ / 2 - texW / 2),
+                    static_cast<float>(r * cellHeight_ + cellHeight_ / 2 - texH / 2),
+                    static_cast<float>(texW),
+                    static_cast<float>(texH)
+                };
+
+                SDL_RenderTexture(renderer, texture, nullptr, &dst);
+                SDL_DestroyTexture(texture);
+            }
+        }
+    }
 }

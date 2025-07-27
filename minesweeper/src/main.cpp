@@ -30,7 +30,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     app = new App(WINDOW_WIDTH, WINDOW_HEIGHT);
     if (!app->init()) return SDL_APP_FAILURE;
 
-    grid = new Grid(GRID_ROWS, GRID_COLS, WINDOW_WIDTH, WINDOW_HEIGHT);
+    grid = new Grid(GRID_ROWS, GRID_COLS, WINDOW_WIDTH, WINDOW_HEIGHT, app->font());
     return SDL_APP_CONTINUE;
 }
 
