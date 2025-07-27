@@ -1,5 +1,7 @@
 #include "Grid.hpp"
 #include <iostream>
+#include <random>
+#include <algorithm> // for std::shuffle
 
 Grid::Grid(int rows, int cols, int windowWidth, int windowHeight)
     : rows_(rows), cols_(cols)
@@ -8,6 +10,8 @@ Grid::Grid(int rows, int cols, int windowWidth, int windowHeight)
     cellHeight_ = windowHeight / rows_;
 
     cells_.resize(rows_, std::vector<Cell>(cols_));
+
+    placeMines(DEFAULT_MINE_COUNT);
 }
 
 void Grid::draw(SDL_Renderer* renderer) {
@@ -16,7 +20,11 @@ void Grid::draw(SDL_Renderer* renderer) {
             const Cell& cell = cells_[r][c];
 
             if (cell.isRevealed) {
-                SDL_SetRenderDrawColor(renderer, 180, 180, 180, 255);  // light gray
+                if (cell.hasMine) {
+                    SDL_SetRenderDrawColor(renderer, 200, 0, 0, 255);  // red
+                } else {
+                    SDL_SetRenderDrawColor(renderer, 180, 180, 180, 255); // light gray
+                }
             } else {
                 SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);     // dark cell
             }
@@ -43,6 +51,8 @@ void Grid::draw(SDL_Renderer* renderer) {
         int y = r * cellHeight_;
         SDL_RenderLine(renderer, 0, y, cols_ * cellWidth_, y);
     }
+
+    
 }
 
 void Grid::handleClick(int x, int y) {
@@ -55,4 +65,24 @@ void Grid::handleClick(int x, int y) {
             std::cout << "Revealed cell: (" << row << ", " << col << ")\n";
         }
     }
+}
+
+void Grid::placeMines(int mineCount) {
+    std::vector<std::pair<int, int>> positions;
+
+    for (int r = 0; r < rows_; ++r)
+        for (int c = 0; c < cols_; ++c)
+            positions.emplace_back(r, c);
+
+    // Shuffle positions randomly
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::shuffle(positions.begin(), positions.end(), gen);
+
+    for (int i = 0; i < mineCount && i < static_cast<int>(positions.size()); ++i) {
+        auto [r, c] = positions[i];
+        cells_[r][c].hasMine = true;
+    }
+
+    std::cout << "Mines placed: " << std::min(mineCount, (int)positions.size()) << '\n';
 }
