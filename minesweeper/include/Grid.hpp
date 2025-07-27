@@ -1,5 +1,14 @@
 #pragma once
 #include <SDL3/SDL.h>
+#include <vector>
+
+struct Cell {
+    bool isRevealed = false;
+    bool isFlagged = false;
+    // Future:
+    // bool hasMine = false;
+    // int adjacentMines = 0;
+};
 
 class Grid {
 public:
@@ -12,4 +21,5 @@ private:
     int cols_;
     int cellWidth_;
     int cellHeight_;
+    std::vector<std::vector<Cell>> cells_;
 };
