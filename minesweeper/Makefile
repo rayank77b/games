@@ -1,23 +1,17 @@
-# Compiler settings
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -pedantic -Iinclude $(shell pkg-config --cflags sdl3)
+CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude $(shell pkg-config --cflags sdl3)
 LDFLAGS = $(shell pkg-config --libs sdl3)
-
-# Target executable
-TARGET = minesweeper
-
-# Source files
 SRC = $(wildcard src/*.cpp)
-
-# Object files
 OBJ = $(SRC:.cpp=.o)
+TARGET = minesweeper
 
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJ) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f $(TARGET) $(OBJ)
+	rm -f src/*.o $(TARGET)
 
 .PHONY: all clean
+
