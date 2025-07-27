@@ -12,7 +12,7 @@ Grid::Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f)
     cellWidth_  = windowWidth / cols_;
     cellHeight_ = windowHeight / rows_;
 
-    cells_.resize(rows_, std::vector<Cell>(cols_));
+    cells_.resize(cols_, std::vector<Cell>(rows_));
 
     placeMines(DEFAULT_MINE_COUNT);
     computeAdjacency();
@@ -21,7 +21,7 @@ Grid::Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f)
 void Grid::draw(SDL_Renderer* renderer) {
     for (int r = 0; r < rows_; ++r) {
         for (int c = 0; c < cols_; ++c) {
-            const Cell& cell = cells_[r][c];
+            const Cell& cell = cells_[c][r];
 
             if (cell.isRevealed) {
                 if (cell.hasMine) {
@@ -60,30 +60,12 @@ void Grid::draw(SDL_Renderer* renderer) {
     }
 }
 
-void Grid::handleClick(int x, int y) {
-    int col = x / cellWidth_;
-    int row = y / cellHeight_;
-    if (col >= 0 && col < cols_ && row >= 0 && row < rows_) {
-        Cell& cell = cells_[row][col];
-        if (!cell.isRevealed) {
-            cell.isRevealed = true;
-            std::cout << "Revealed (" << row << ", " << col << ")";
-            if (cell.hasMine) {
-                std::cout << " → 💣 BOOM";
-            } else {
-                std::cout << " → " << cell.adjacentMines << " nearby mine(s)";
-            }
-            std::cout << '\n';
-        }
-    }
-}
-
 void Grid::placeMines(int mineCount) {
     std::vector<std::pair<int, int>> positions;
 
     for (int r = 0; r < rows_; ++r)
         for (int c = 0; c < cols_; ++c)
-            positions.emplace_back(r, c);
+            positions.emplace_back(c, r);
 
     // Shuffle positions randomly
     std::random_device rd;
@@ -91,22 +73,63 @@ void Grid::placeMines(int mineCount) {
     std::shuffle(positions.begin(), positions.end(), gen);
 
     for (int i = 0; i < mineCount && i < static_cast<int>(positions.size()); ++i) {
-        auto [r, c] = positions[i];
-        cells_[r][c].hasMine = true;
+        auto [c, r] = positions[i];
+        cells_[c][r].hasMine = true;
     }
 
     std::cout << "Mines placed: " << std::min(mineCount, (int)positions.size()) << '\n';
 }
 
-int Grid::getMinenSum(int r, int c  ) {
+void Grid::handleClick(int x, int y) {
+    int col = x / cellWidth_;
+    int row = y / cellHeight_;
+    if (inBounds(col, row)) {
+        Cell& cell = cells_[col][row];
+        if (!cell.isRevealed) {
+            std::cout << "Revealed (" << col << ", " << row << ")";
+            if (cell.hasMine) {
+                std::cout << " → 💣 BOOM";
+                cell.isRevealed = true;
+            } else {
+                std::cout << " → " << cell.adjacentMines << " nearby mine(s)";
+                revealCell(col,row);
+            }
+            std::cout << '\n';
+        }
+    }
+}
+
+void Grid::revealCell(int x, int y) {
+    // 1) Bounds check
+    if (!inBounds(x, y)) return;
+
+    Cell& cell = cells_[x][y];
+
+    // 2) If already revealed or flagged, do nothing
+    if (cell.isRevealed || cell.isFlagged) return;
+
+    // 3) Reveal this cell
+    cell.isRevealed = true;
+
+    // 4) If it has zero neighbor mines, recurse on all 8 neighbors
+    if (cell.adjacentMines == 0 && !cell.hasMine) {
+        for (int dy = -1; dy <= 1; ++dy) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                // skip the center cell
+                if (dx == 0 && dy == 0) continue;
+                revealCell(x + dx, y + dy);
+            }
+        }
+    }
+}
+
+int Grid::getMinenSum(int c, int r  ) {
     int count = 0;
-    for(int x=-1; x<=1; x++) {
-        for(int y=-1; y<=1; y++) {
-            if(x+r>-1 && x+r<cols_) {
-                if(y+c>-1 && y+c<rows_) {
-                    if (cells_[x+r][y+c].hasMine) {
-                        ++count;
-                    }
+    for(int dx=-1; dx<=1; dx++) {
+        for(int dy=-1; dy<=1; dy++) {
+            if ( inBounds(dx+c, dy+r) )  {
+                if (cells_[dx+c][dy+r].hasMine) {
+                    ++count;
                 }
             }
         }
@@ -115,24 +138,26 @@ int Grid::getMinenSum(int r, int c  ) {
 }
 
 void Grid::computeAdjacency() {
+    
     for (int r = 0; r < rows_; ++r) {
         for (int c = 0; c < cols_; ++c) {
-            if (cells_[r][c].hasMine) 
+            if (cells_[c][r].hasMine) 
                 continue;
-            cells_[r][c].adjacentMines = getMinenSum(r,c);
+            cells_[c][r].adjacentMines = getMinenSum(c,r);
         }
     }
 }
+
 
 void Grid::drawNumbers(SDL_Renderer* renderer) {
     SDL_Color textColor = {0, 0, 0, 255};  // black
 
     for (int r = 0; r < rows_; ++r) {
         for (int c = 0; c < cols_; ++c) {
-            const Cell& cell = cells_[r][c];
+            const Cell& cell = cells_[c][r];
             
-            //if (cell.isRevealed && !cell.hasMine && cell.adjacentMines > 0) {
-            if (!cell.hasMine && cell.adjacentMines >= 0) {
+            if (cell.isRevealed && !cell.hasMine && cell.adjacentMines > 0) {
+            //if (!cell.hasMine && cell.adjacentMines >= 0) {
                 
                 std::string text = std::to_string(cell.adjacentMines);
 

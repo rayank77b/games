@@ -18,7 +18,10 @@ public:
     void draw(SDL_Renderer* renderer);
     void handleClick(int x, int y);
     void drawNumbers(SDL_Renderer* renderer);
-    int getMinenSum(int c, int r);
+
+    // Reveal the cell at (x,y). If neighborMines == 0, 
+    // reveal neighbors recursively.
+    void revealCell(int x, int y);
 
     int getCW() {return cellWidth_;};
     int getCH() {return cellHeight_;};
@@ -33,4 +36,9 @@ private:
 
     void placeMines(int mineCount);
     void computeAdjacency(); 
+    int getMinenSum(int c, int r);
+    // Helper to check bounds
+    bool inBounds(int x, int y) const {
+        return x >= 0 && x < cols_ && y >= 0 && y < rows_;
+    }
 };
