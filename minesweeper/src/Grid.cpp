@@ -98,26 +98,28 @@ void Grid::placeMines(int mineCount) {
     std::cout << "Mines placed: " << std::min(mineCount, (int)positions.size()) << '\n';
 }
 
-void Grid::computeAdjacency() {
-    const int dx[] = { -1, 0, 1, -1, 0, 1, -1, 1 };
-    const int dy[] = { -1, -1, -1, 0, 0, 0, 1, 1 };
-
-    for (int r = 0; r < rows_; ++r) {
-        for (int c = 0; c < cols_; ++c) {
-            if (cells_[r][c].hasMine) continue;
-
-            int count = 0;
-            for (int i = 0; i < 8; ++i) {
-                int nr = r + dy[i];
-                int nc = c + dx[i];
-                if (nr >= 0 && nr < rows_ && nc >= 0 && nc < cols_) {
-                    if (cells_[nr][nc].hasMine) {
+int Grid::getMinenSum(int r, int c  ) {
+    int count = 0;
+    for(int x=-1; x<=1; x++) {
+        for(int y=-1; y<=1; y++) {
+            if(x+r>-1 && x+r<cols_) {
+                if(y+c>-1 && y+c<rows_) {
+                    if (cells_[x+r][y+c].hasMine) {
                         ++count;
                     }
                 }
             }
+        }
+    }
+    return count;
+}
 
-            cells_[r][c].adjacentMines = count;
+void Grid::computeAdjacency() {
+    for (int r = 0; r < rows_; ++r) {
+        for (int c = 0; c < cols_; ++c) {
+            if (cells_[r][c].hasMine) 
+                continue;
+            cells_[r][c].adjacentMines = getMinenSum(r,c);
         }
     }
 }
@@ -125,27 +127,12 @@ void Grid::computeAdjacency() {
 void Grid::drawNumbers(SDL_Renderer* renderer) {
     SDL_Color textColor = {0, 0, 0, 255};  // black
 
-    std::string text = "Blub blub";
-    SDL_Color fg = {0,0,0, 255};
-
-    SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), text.length(), fg);
-    //if (!surface) 
-    //    SDL_Log("Failed to load surface: %s", SDL_GetError());
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_free(surface);
-
-    float texW = 0, texH = 0;
-    SDL_GetTextureSize(texture, &texW, &texH);
-    SDL_FRect dst = { 10, 10, texW, texH };
-    SDL_RenderTexture(renderer, texture, nullptr, &dst);
-    SDL_DestroyTexture(texture);
-
     for (int r = 0; r < rows_; ++r) {
         for (int c = 0; c < cols_; ++c) {
             const Cell& cell = cells_[r][c];
             
             //if (cell.isRevealed && !cell.hasMine && cell.adjacentMines > 0) {
-            if (!cell.hasMine && cell.adjacentMines > 0) {
+            if (!cell.hasMine && cell.adjacentMines >= 0) {
                 
                 std::string text = std::to_string(cell.adjacentMines);
 

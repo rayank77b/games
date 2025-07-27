@@ -38,6 +38,7 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
     app->clear();
     grid->draw(app->renderer());
     app->present();
+    SDL_Delay(16); // ~60 FPS cap
     return SDL_APP_CONTINUE;
 }
 

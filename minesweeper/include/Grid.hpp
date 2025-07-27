@@ -18,6 +18,10 @@ public:
     void draw(SDL_Renderer* renderer);
     void handleClick(int x, int y);
     void drawNumbers(SDL_Renderer* renderer);
+    int getMinenSum(int c, int r);
+
+    int getCW() {return cellWidth_;};
+    int getCH() {return cellHeight_;};
 
 private:
     int rows_;
