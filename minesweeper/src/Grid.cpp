@@ -5,10 +5,11 @@
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
-Grid::Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f)
+Grid::Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f, TTF_Font* fb)
     : rows_(rows), cols_(cols)
 {
-    font = f;
+    font_ = f;
+    fontBig_ = fb;
     cellWidth_  = windowWidth / cols_;
     cellHeight_ = windowHeight / rows_;
 
@@ -16,6 +17,11 @@ Grid::Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f)
 
     placeMines(DEFAULT_MINE_COUNT);
     computeAdjacency();
+    
+}
+
+void Grid::restart() {
+
 }
 
 void Grid::draw(SDL_Renderer* renderer) {
@@ -82,7 +88,7 @@ void Grid::placeMines(int mineCount) {
     std::cout << "Mines placed: " << std::min(mineCount, (int)positions.size()) << '\n';
 }
 
-void Grid::handleClick(int x, int y) {
+GameState Grid::handleClick(int x, int y) {
     int col = x / cellWidth_;
     int row = y / cellHeight_;
     if (inBounds(col, row)) {
@@ -92,6 +98,8 @@ void Grid::handleClick(int x, int y) {
             if (cell.hasMine) {
                 std::cout << " → 💣 BOOM";
                 cell.isRevealed = true;
+                std::cout << '\n';
+                return GameState::GAMEOVER;
             } else {
                 std::cout << " → " << cell.adjacentMines << " nearby mine(s)";
                 revealCell(col,row);
@@ -99,6 +107,7 @@ void Grid::handleClick(int x, int y) {
             std::cout << '\n';
         }
     }
+    return GameState::RUN;
 }
 
 void Grid::revealCell(int x, int y) {
@@ -157,7 +166,7 @@ bool Grid::inBounds(int x, int y) const {
     return x >= 0 && x < cols_ && y >= 0 && y < rows_;
 }
 
-void Grid::handleMouseClick(int mouseX, int mouseY, bool right) {
+GameState Grid::handleMouseClick(int mouseX, int mouseY, bool right) {
     int gridX = mouseX / cellWidth_;
     int gridY = mouseY / cellHeight_;
 
@@ -174,9 +183,9 @@ void Grid::handleMouseClick(int mouseX, int mouseY, bool right) {
         }
     } else  {   // left or midle was clicked
         std::cout<<"LEFT was clicked \n";
-        handleClick(mouseX, mouseY);
+        return handleClick(mouseX, mouseY);
     }
-    
+    return GameState::RUN;
 }
 
 void Grid::drawNumbers(SDL_Renderer* renderer) {
@@ -191,7 +200,7 @@ void Grid::drawNumbers(SDL_Renderer* renderer) {
                 
                 std::string text = std::to_string(cell.adjacentMines);
 
-                SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), text.size(), textColor);
+                SDL_Surface* surface = TTF_RenderText_Solid(font_, text.c_str(), text.size(), textColor);
                 if (!surface) {
                     //SDL_Log("Failed to load surface: %s", SDL_GetError());
                     continue;
@@ -216,4 +225,26 @@ void Grid::drawNumbers(SDL_Renderer* renderer) {
             }
         }
     }
+}
+
+void Grid::drawGameOver(SDL_Renderer* renderer) {
+    SDL_Color textColor = {155, 0, 0, 255};  // red
+    std::string text = "GAME OVER\nContinue press R";
+    SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(fontBig_, text.c_str(), text.size(), textColor,700);
+    if (!surface) return;
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_free(surface);
+    if (!texture) return;
+    float texW = 0, texH = 0;
+    SDL_GetTextureSize(texture, &texW, &texH);
+
+    SDL_FRect dst {
+        100.0,
+        100.0,
+        static_cast<float>(texW),
+        static_cast<float>(texH)
+    };
+
+    SDL_RenderTexture(renderer, texture, nullptr, &dst);
+    SDL_DestroyTexture(texture);
 }

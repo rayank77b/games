@@ -30,15 +30,24 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     app = new App(WINDOW_WIDTH, WINDOW_HEIGHT);
     if (!app->init()) return SDL_APP_FAILURE;
 
-    grid = new Grid(GRID_ROWS, GRID_COLS, WINDOW_WIDTH, WINDOW_HEIGHT, app->font());
+    grid = new Grid(GRID_ROWS, GRID_COLS, WINDOW_WIDTH, WINDOW_HEIGHT, app->font(), app->fontBig());
     return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppIterate(void* appstate) {
-    app->clear();
-    grid->draw(app->renderer());
-    app->present();
+    if(app->gameState==GameState::RUN || app->gameState==GameState::GAMEOVER){
+        app->clear();
+        grid->draw(app->renderer());
+        if(app->gameState==GameState::GAMEOVER)
+            grid->drawGameOver(app->renderer());
+        app->present();
+    } else if(app->gameState==GameState::RESTART) {
+        grid->restart();
+        app->gameState=GameState::RUN;
+    }
     SDL_Delay(16); // ~60 FPS cap
+    //if(grid->gameOver_)
+    //    return SDL_APP_SUCCESS;
     return SDL_APP_CONTINUE;
 }
 
@@ -50,12 +59,20 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
         event->key.key == SDLK_ESCAPE) 
         return SDL_APP_FAILURE;
     
-    if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-        int mx = event->button.x;
-        int my = event->button.y;
-        bool right = false;
-        if(event->button.button==SDL_BUTTON_RIGHT)  right = true;
-        grid->handleMouseClick(event->button.x, event->button.y, right);  
+    if (app->gameState == GameState::GAMEOVER && 
+        event->type == SDL_EVENT_KEY_DOWN   &&
+        event->key.key == SDLK_R) {
+            app->gameState = GameState::RESTART;
+    }
+    
+    if (app->gameState == GameState::RUN) {
+        if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+            int mx = event->button.x;
+            int my = event->button.y;
+            bool right = false;
+            if(event->button.button==SDL_BUTTON_RIGHT)  right = true;
+            app->gameState = grid->handleMouseClick(event->button.x, event->button.y, right);  
+        }
     }
     return SDL_APP_CONTINUE;
 }

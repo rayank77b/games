@@ -45,6 +45,11 @@ bool App::init() {
         SDL_Log("Failed to load font: %s", SDL_GetError());
         return false;
     } 
+    fontBig_ = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 48);
+    if (fontBig_==NULL) {
+        SDL_Log("Failed to load font: %s", SDL_GetError());
+        return false;
+    } 
     SDL_Log("Fonts loaded OK");
     return true;
 }
@@ -64,4 +69,8 @@ SDL_Renderer* App::renderer() const {
 
 TTF_Font* App::font() const {
     return font_;
+}
+
+TTF_Font* App::fontBig() const {
+    return fontBig_;
 }
