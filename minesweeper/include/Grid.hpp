@@ -17,11 +17,11 @@ class Grid {
 public:
     Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f, TTF_Font* fb);
     void draw(SDL_Renderer* renderer);
-    GameState handleClick(int x, int y);
+    GameState handleLeftClick(int x, int y);
     GameState handleMouseClick(int mouseX, int mouseY, bool right);
     void drawNumbers(SDL_Renderer* renderer);
 
-    void drawGameOver(SDL_Renderer* renderer);
+    void drawGameOver(SDL_Renderer* renderer, bool lost);
 
     void restart();
 
@@ -40,6 +40,9 @@ private:
     TTF_Font* font_;
     TTF_Font* fontBig_;
     std::vector<std::vector<Cell>> cells_;
+
+    int countCells_;
+    bool cheated = false;  // for debug 
 
     void placeMines(int mineCount);
     void computeAdjacency(); 

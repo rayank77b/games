@@ -2,7 +2,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
-enum class GameState {RUN, GAMEOVER, RESTART};
+enum class GameState {RUN, GAMEOVER, RESTART, YOUWON};
 
 class App {
 public:
@@ -16,7 +16,7 @@ public:
     TTF_Font* fontBig() const;
 
     GameState gameState = GameState::RUN;
-    
+
 private:
     int width_;
     int height_;

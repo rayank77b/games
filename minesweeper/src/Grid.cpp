@@ -17,10 +17,11 @@ Grid::Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f, T
 
     placeMines(DEFAULT_MINE_COUNT);
     computeAdjacency();
-    
+    countCells_ = 0;
 }
 
 void Grid::restart() {
+    std::cout<<"Restart the game...\n";
     // here we restart our game.
     for (int r = 0; r < rows_; ++r){ 
         for (int c = 0; c < cols_; ++c) {
@@ -32,6 +33,7 @@ void Grid::restart() {
     }
     placeMines(DEFAULT_MINE_COUNT);
     computeAdjacency();
+    countCells_ = 0;
 }
 
 void Grid::draw(SDL_Renderer* renderer) {
@@ -47,6 +49,8 @@ void Grid::draw(SDL_Renderer* renderer) {
             } else {
                 if(cell.isFlagged) 
                     SDL_SetRenderDrawColor(renderer, 125, 125, 0, 255); // yellow
+                else if (cell.hasMine && cheated)
+                    SDL_SetRenderDrawColor(renderer, 20, 0, 0, 255);  // debug
                 else 
                     SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);     // dark cell
             }
@@ -76,6 +80,7 @@ void Grid::draw(SDL_Renderer* renderer) {
         int y = r * cellHeight_;
         SDL_RenderLine(renderer, 0, y, cols_ * cellWidth_, y);
     }
+    std::cout<<"\ropened cells: "<<countCells_<<std::flush;
 }
 
 void Grid::placeMines(int mineCount) {
@@ -98,28 +103,6 @@ void Grid::placeMines(int mineCount) {
     std::cout << "Mines placed: " << std::min(mineCount, (int)positions.size()) << '\n';
 }
 
-GameState Grid::handleClick(int x, int y) {
-    int col = x / cellWidth_;
-    int row = y / cellHeight_;
-    if (inBounds(col, row)) {
-        Cell& cell = cells_[col][row];
-        if (!cell.isRevealed) {
-            std::cout << "Revealed (" << col << ", " << row << ")";
-            if (cell.hasMine) {
-                std::cout << " → 💣 BOOM";
-                cell.isRevealed = true;
-                std::cout << '\n';
-                return GameState::GAMEOVER;
-            } else {
-                std::cout << " → " << cell.adjacentMines << " nearby mine(s)";
-                revealCell(col,row);
-            }
-            std::cout << '\n';
-        }
-    }
-    return GameState::RUN;
-}
-
 void Grid::revealCell(int x, int y) {
     // 1) Bounds check
     if (!inBounds(x, y)) return;
@@ -131,6 +114,7 @@ void Grid::revealCell(int x, int y) {
 
     // 3) Reveal this cell
     cell.isRevealed = true;
+    countCells_++;
 
     // 4) If it has zero neighbor mines, recurse on all 8 neighbors
     if (cell.adjacentMines == 0 && !cell.hasMine) {
@@ -176,9 +160,34 @@ bool Grid::inBounds(int x, int y) const {
     return x >= 0 && x < cols_ && y >= 0 && y < rows_;
 }
 
+
+GameState Grid::handleLeftClick(int x, int y) {
+    int col = x / cellWidth_;
+    int row = y / cellHeight_;
+    if (inBounds(col, row)) {
+        Cell& cell = cells_[col][row];
+        if (!cell.isRevealed && !cell.isFlagged) {
+            std::cout << "Revealed (" << col << ", " << row << ")";
+            if (cell.hasMine) {
+                std::cout << " → 💣 BOOM";
+                cell.isRevealed = true;
+                countCells_++;
+                std::cout << '\n';
+                return GameState::GAMEOVER;
+            } else {
+                std::cout << " → " << cell.adjacentMines << " nearby mine(s)";
+                revealCell(col,row);
+            }
+            std::cout << '\n';
+        }
+    }
+    return GameState::RUN;
+}
+
 GameState Grid::handleMouseClick(int mouseX, int mouseY, bool right) {
     int gridX = mouseX / cellWidth_;
     int gridY = mouseY / cellHeight_;
+    GameState ret = GameState::RUN;
 
     std::cout<<"handleMouseClick("<<gridX<<"|"<<gridY<<") ";
     if(right) {  // right was clicked
@@ -189,13 +198,19 @@ GameState Grid::handleMouseClick(int mouseX, int mouseY, bool right) {
             if (!cell.isRevealed) {
                 std::cout << "Flagged (" << gridX << ", " << gridY << ")";
                 cell.isFlagged = !cell.isFlagged;
+                if(cell.isFlagged)
+                    countCells_++;
+                else
+                    countCells_--;
             }
         }
     } else  {   // left or midle was clicked
         std::cout<<"LEFT was clicked \n";
-        return handleClick(mouseX, mouseY);
+        ret = handleLeftClick(mouseX, mouseY);
     }
-    return GameState::RUN;
+    if(countCells_==cols_*rows_)
+        return GameState::YOUWON;
+    return ret;
 }
 
 void Grid::drawNumbers(SDL_Renderer* renderer) {
@@ -237,9 +252,13 @@ void Grid::drawNumbers(SDL_Renderer* renderer) {
     }
 }
 
-void Grid::drawGameOver(SDL_Renderer* renderer) {
-    SDL_Color textColor = {155, 0, 0, 255};  // red
-    std::string text = "GAME OVER\nContinue press R";
+void Grid::drawGameOver(SDL_Renderer* renderer, bool lost) {
+    SDL_Color textColor = {0, 200, 0, 255};  // green
+    std::string text = "YOU WON\nContinue press R";
+    if(lost){
+        textColor = {155, 0, 0, 255};  // red
+        text = "GAME OVER\nContinue press R";
+    } 
     SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(fontBig_, text.c_str(), text.size(), textColor,700);
     if (!surface) return;
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);

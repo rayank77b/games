@@ -8,8 +8,8 @@
 // —–––––––––––––––––––––––––––––––––––––––––––––
 // Window & Grid configuration
 // —–––––––––––––––––––––––––––––––––––––––––––––
-constexpr int WINDOW_WIDTH  = 800;
-constexpr int WINDOW_HEIGHT = 600;
+constexpr int WINDOW_WIDTH  = 1000;
+constexpr int WINDOW_HEIGHT = 1000;
 
 // change these to adjust your grid
 constexpr int GRID_COLS = 16;
@@ -35,16 +35,18 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 }
 
 SDL_AppResult SDL_AppIterate(void* appstate) {
-    if(app->gameState==GameState::RUN || app->gameState==GameState::GAMEOVER){
+    if(app->gameState==GameState::RESTART) {
+        grid->restart();
+        app->gameState=GameState::RUN;
+    } else {
         app->clear();
         grid->draw(app->renderer());
         if(app->gameState==GameState::GAMEOVER)
-            grid->drawGameOver(app->renderer());
+            grid->drawGameOver(app->renderer(), true);
+        else if(app->gameState==GameState::YOUWON)
+            grid->drawGameOver(app->renderer(), false);
         app->present();
-    } else if(app->gameState==GameState::RESTART) {
-        grid->restart();
-        app->gameState=GameState::RUN;
-    }
+    } 
     SDL_Delay(16); // ~60 FPS cap
     //if(grid->gameOver_)
     //    return SDL_APP_SUCCESS;
@@ -59,7 +61,8 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
         event->key.key == SDLK_ESCAPE) 
         return SDL_APP_FAILURE;
     
-    if (app->gameState == GameState::GAMEOVER && 
+    if ((app->gameState == GameState::GAMEOVER || 
+        app->gameState == GameState::YOUWON) &&
         event->type == SDL_EVENT_KEY_DOWN   &&
         event->key.key == SDLK_R) {
             app->gameState = GameState::RESTART;
