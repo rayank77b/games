@@ -21,7 +21,17 @@ Grid::Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f, T
 }
 
 void Grid::restart() {
-
+    // here we restart our game.
+    for (int r = 0; r < rows_; ++r){ 
+        for (int c = 0; c < cols_; ++c) {
+            cells_[c][r].adjacentMines = 0;
+            cells_[c][r].isFlagged = false;
+            cells_[c][r].isRevealed = false;
+            cells_[c][r].hasMine = false;
+        }
+    }
+    placeMines(DEFAULT_MINE_COUNT);
+    computeAdjacency();
 }
 
 void Grid::draw(SDL_Renderer* renderer) {
