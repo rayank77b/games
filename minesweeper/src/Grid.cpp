@@ -24,13 +24,15 @@ void Grid::draw(SDL_Renderer* renderer) {
             const Cell& cell = cells_[c][r];
 
             if (cell.isRevealed) {
-                if (cell.hasMine) {
+                if (cell.hasMine)
                     SDL_SetRenderDrawColor(renderer, 200, 0, 0, 255);  // red
-                } else {
+                else
                     SDL_SetRenderDrawColor(renderer, 180, 180, 180, 255); // light gray
-                }
             } else {
-                SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);     // dark cell
+                if(cell.isFlagged) 
+                    SDL_SetRenderDrawColor(renderer, 125, 125, 0, 255); // yellow
+                else 
+                    SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);     // dark cell
             }
 
             SDL_FRect rect = {
@@ -138,7 +140,6 @@ int Grid::getMinenSum(int c, int r  ) {
 }
 
 void Grid::computeAdjacency() {
-    
     for (int r = 0; r < rows_; ++r) {
         for (int c = 0; c < cols_; ++c) {
             if (cells_[c][r].hasMine) 
@@ -148,6 +149,35 @@ void Grid::computeAdjacency() {
     }
 }
 
+Cell& Grid::getMutableCell(int x, int y) {
+    return cells_[x][y];
+}
+
+bool Grid::inBounds(int x, int y) const {
+    return x >= 0 && x < cols_ && y >= 0 && y < rows_;
+}
+
+void Grid::handleMouseClick(int mouseX, int mouseY, bool right) {
+    int gridX = mouseX / cellWidth_;
+    int gridY = mouseY / cellHeight_;
+
+    std::cout<<"handleMouseClick("<<gridX<<"|"<<gridY<<") ";
+    if(right) {  // right was clicked
+        std::cout<<"RIGHT was clicked \n";
+        // Toggle flag
+        if (inBounds(gridX, gridY)) {
+            Cell& cell = getMutableCell(gridX, gridY);
+            if (!cell.isRevealed) {
+                std::cout << "Flagged (" << gridX << ", " << gridY << ")";
+                cell.isFlagged = !cell.isFlagged;
+            }
+        }
+    } else  {   // left or midle was clicked
+        std::cout<<"LEFT was clicked \n";
+        handleClick(mouseX, mouseY);
+    }
+    
+}
 
 void Grid::drawNumbers(SDL_Renderer* renderer) {
     SDL_Color textColor = {0, 0, 0, 255};  // black

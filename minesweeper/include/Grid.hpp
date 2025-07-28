@@ -26,6 +26,9 @@ public:
     int getCW() {return cellWidth_;};
     int getCH() {return cellHeight_;};
 
+    void handleMouseClick(int mouseX, int mouseY, bool right);
+    
+
 private:
     int rows_;
     int cols_;
@@ -38,7 +41,6 @@ private:
     void computeAdjacency(); 
     int getMinenSum(int c, int r);
     // Helper to check bounds
-    bool inBounds(int x, int y) const {
-        return x >= 0 && x < cols_ && y >= 0 && y < rows_;
-    }
+    bool inBounds(int x, int y) const; 
+    Cell& getMutableCell(int x, int y);
 };

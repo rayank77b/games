@@ -50,12 +50,12 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
         event->key.key == SDLK_ESCAPE) 
         return SDL_APP_FAILURE;
     
-    if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
-        event->button.button == SDL_BUTTON_LEFT) 
-    {
-        int x = event->button.x;
-        int y = event->button.y;
-        grid->handleClick(x, y);
+    if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        int mx = event->button.x;
+        int my = event->button.y;
+        bool right = false;
+        if(event->button.button==SDL_BUTTON_RIGHT)  right = true;
+        grid->handleMouseClick(event->button.x, event->button.y, right);  
     }
     return SDL_APP_CONTINUE;
 }
