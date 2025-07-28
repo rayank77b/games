@@ -2,6 +2,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <iostream>
+#include <chrono>
 #include "App.hpp"
 #include "Grid.hpp"
 
@@ -20,6 +21,9 @@ constexpr int GRID_ROWS = 16;
 // —–––––––––––––––––––––––––––––––––––––––––––––
 static App* app = nullptr;
 static Grid* grid = nullptr;
+std::chrono::_V2::system_clock::time_point start;
+std::chrono::_V2::system_clock::time_point end;
+bool messed = false;
 
 // —–––––––––––––––––––––––––––––––––––––––––––––
 // SDL3 callbacks
@@ -31,6 +35,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
     if (!app->init()) return SDL_APP_FAILURE;
 
     grid = new Grid(GRID_ROWS, GRID_COLS, WINDOW_WIDTH, WINDOW_HEIGHT, app->font(), app->fontBig());
+
+    start = std::chrono::high_resolution_clock::now();
+    messed = false;
     return SDL_APP_CONTINUE;
 }
 
@@ -38,13 +45,21 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
     if(app->gameState==GameState::RESTART) {
         grid->restart();
         app->gameState=GameState::RUN;
+        start = std::chrono::high_resolution_clock::now();
+        messed = false;
     } else {
         app->clear();
         grid->draw(app->renderer());
-        if(app->gameState==GameState::GAMEOVER)
-            grid->drawGameOver(app->renderer(), true);
-        else if(app->gameState==GameState::YOUWON)
-            grid->drawGameOver(app->renderer(), false);
+        if( app->gameState==GameState::GAMEOVER ||
+            app->gameState==GameState::YOUWON ){
+            if(!messed){
+                end = std::chrono::high_resolution_clock::now();
+                messed = true;
+            }
+            std::chrono::duration<double> duration = end - start;
+            double sekunden = duration.count();
+            grid->drawGameOver(app->renderer(), app->gameState==GameState::GAMEOVER, sekunden);
+        }
         app->present();
     } 
     SDL_Delay(16); // ~60 FPS cap

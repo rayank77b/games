@@ -20,8 +20,7 @@ public:
     GameState handleLeftClick(int x, int y);
     GameState handleMouseClick(int mouseX, int mouseY, bool right);
     void drawNumbers(SDL_Renderer* renderer);
-
-    void drawGameOver(SDL_Renderer* renderer, bool lost);
+    void drawGameOver(SDL_Renderer* renderer, bool lost, double sekunden);
 
     void restart();
 

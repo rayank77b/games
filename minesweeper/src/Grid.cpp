@@ -252,13 +252,14 @@ void Grid::drawNumbers(SDL_Renderer* renderer) {
     }
 }
 
-void Grid::drawGameOver(SDL_Renderer* renderer, bool lost) {
+void Grid::drawGameOver(SDL_Renderer* renderer, bool lost, double sekunden) {
     SDL_Color textColor = {0, 200, 0, 255};  // green
-    std::string text = "YOU WON\nContinue press R";
+    std::string text = "YOU WON ";
     if(lost){
         textColor = {155, 0, 0, 255};  // red
-        text = "GAME OVER\nContinue press R";
+        text = "GAME OVER ";
     } 
+    text = text + "                    "+std::to_string(int(sekunden))+" Sekunden Continue press R";
     SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(fontBig_, text.c_str(), text.size(), textColor,700);
     if (!surface) return;
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
