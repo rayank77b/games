@@ -23,14 +23,24 @@ bool Config::load(const std::string& fname) {
     return true;
 }
 
-int Config::getInt(const std::string& k, int def) const {
-    if (auto it = data_.find(k); it != data_.end())
+int Config::getInt(const std::string& key, int def) const {
+    if (auto it = data_.find(key); it != data_.end())
         try { return std::stoi(it->second); } catch(...) {}
     return def;
 }
 
-float Config::getFloat(const std::string& k, float def) const {
-    if (auto it = data_.find(k); it != data_.end())
+float Config::getFloat(const std::string& key, float def) const {
+    if (auto it = data_.find(key); it != data_.end())
         try { return std::stof(it->second); } catch(...) {}
     return def;
+}
+
+void Config::setInt(const std::string& key, int def) {
+    if (auto it = data_.find(key); it != data_.end())
+        try { it->second = def; } catch(...) {}
+}
+
+void Config::setFloat(const std::string& key, float def){
+    if (auto it = data_.find(key); it != data_.end())
+        try { it->second = def; } catch(...) {}
 }

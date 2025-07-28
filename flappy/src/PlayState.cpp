@@ -19,22 +19,37 @@ void PlayState::handleEvent(Game& g, const SDL_Event& e) {
         bird_.flap();
 }
 
-void PlayState::update(Game& g, float delta) {
-    auto& cfg = g.getConfig();
+void PlayState::loadOnce(Config& cfg) {
+    PipeSpawnInterval_ = cfg.getInt("PipeSpawnInterval",2000);
+    PipeSpeed_         = cfg.getFloat("PipeSpeed",200);
+    PipeGap_           = cfg.getInt("PipeGap",500);
+    PipeSpawnIntervalDecrease_ = cfg.getInt("PipeSpawnIntervalDecrease",20);;
+    PipeGapDecrease_   = cfg.getInt("PipeGapDecrease",10);;
+    PipeSpeedIncrease_ = cfg.getFloat("PipeSpeedIncrease",5);;
+}
 
+void PlayState::update(Game& g, float delta) {
     bird_.update(delta);
 
     // neue Pipes spawnen
     accumulator_ += delta*1000;
-    if (accumulator_ >= cfg.getInt("PipeSpawnInterval",1500)) {
-        int gapY = rand() % (g.h() - cfg.getInt("PipeGap",250) - 200) + 100;
+    if (accumulator_ >= PipeSpawnInterval_) {
+        std::cout<<"\nPipeSpawnInterval: "<<PipeSpawnInterval_<<"\n";
+        std::cout<<"PipeSpeed: "<<PipeSpeed_<<"\n";
+        std::cout<<"PipeGap: "<<PipeGap_<<"\n";
+        int gapY = rand() % (g.h() - PipeGap_ - 200) + 100;
         pipes_.emplace_back(
             g.w(),
             gapY,
-            cfg.getInt("PipeGap",250),
-            cfg.getFloat("PipeSpeed",200)
+            PipeGap_,
+            PipeSpeed_
         );
         accumulator_ = 0;
+
+        // change the Parameter
+        PipeSpawnInterval_ -=PipeSpawnIntervalDecrease_;
+        PipeGap_ -= PipeGapDecrease_;
+        PipeSpeed_ += PipeSpeedIncrease_;
     }
 
     // alle Entities updaten

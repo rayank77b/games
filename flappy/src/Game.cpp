@@ -65,7 +65,10 @@ void Game::changeState(State s) {
     score_ = (s==State::Menu ? 0 : score_);
     switch (s) {
       case State::Menu:     st_ = std::make_unique<MenuState>();      break;
-      case State::Playing:  st_ = std::make_unique<PlayState>();      break;
+      case State::Playing:  
+        st_ = std::make_unique<PlayState>();
+        st_->loadOnce(cfg_); 
+        break;
       case State::GameOver: st_ = std::make_unique<GameOverState>();  break;
     }
     if (s==State::GameOver) saveHighScore();
