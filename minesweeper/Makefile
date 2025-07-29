@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude $(shell pkg-config --cflags sdl3)
+CXXFLAGS = -std=c++17 -O0 -Wall -Wextra -Iinclude $(shell pkg-config --cflags sdl3)
 CXXFLAGS += -I/usr/include/SDL3 -I/usr/include/SDL3_ttf
 LDFLAGS  = -lSDL3 -lSDL3_ttf
 

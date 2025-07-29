@@ -43,6 +43,8 @@ private:
     int countCells_;
     bool cheated = false;  // for debug 
 
+    SDL_Color textColorBlack = {0, 0, 0, 255};  // black
+
     void placeMines(const int& mineCount);
     void computeAdjacency(); 
     int getMinenSum(const int& c, const int& r);

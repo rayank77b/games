@@ -212,29 +212,23 @@ GameState Grid::handleMouseClick(const int& mouseX, const int& mouseY, const boo
 }
 
 void Grid::drawNumbers(SDL_Renderer* renderer) {
-    SDL_Color textColor = {0, 0, 0, 255};  // black
-
+    float texW = 0, texH = 0;
+    
     for (int r = 0; r < rows_; ++r) {
-        for (int c = 0; c < cols_; ++c) {
-            const Cell& cell = cells_[c][r];
-            
-            if (cell.isRevealed && !cell.hasMine && cell.adjacentMines > 0) {
-            //if (!cell.hasMine && cell.adjacentMines >= 0) {
-                
-                std::string text = std::to_string(cell.adjacentMines);
+        for (int c = 0; c < cols_; ++c) {           
+            if (cells_[c][r].isRevealed && !cells_[c][r].hasMine 
+                && cells_[c][r].adjacentMines > 0) {
+                std::string text = std::to_string(cells_[c][r].adjacentMines);
 
-                SDL_Surface* surface = TTF_RenderText_Solid(font_, text.c_str(), text.size(), textColor);
-                if (!surface) {
-                    //SDL_Log("Failed to load surface: %s", SDL_GetError());
-                    continue;
-                }
+                SDL_Surface* surface = TTF_RenderText_Solid(font_, text.c_str(), text.size(), textColorBlack);
+                if (!surface) continue;
+
                 SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-                SDL_free(surface);
+                //SDL_free(surface);
+                SDL_DestroySurface(surface);
                 if (!texture) continue;
 
-                float texW = 0, texH = 0;
                 SDL_GetTextureSize(texture, &texW, &texH);
-
 
                 SDL_FRect dst {
                     static_cast<float>(c * cellWidth_ + cellWidth_ / 2 - texW / 2),
@@ -248,6 +242,7 @@ void Grid::drawNumbers(SDL_Renderer* renderer) {
             }
         }
     }
+        
 }
 
 void Grid::drawGameOver(SDL_Renderer* renderer, const bool& lost, const double& sekunden) {
@@ -261,7 +256,8 @@ void Grid::drawGameOver(SDL_Renderer* renderer, const bool& lost, const double& 
     SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(fontBig_, text.c_str(), text.size(), textColor,700);
     if (!surface) return;
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_free(surface);
+    //SDL_free(surface);
+    SDL_DestroySurface(surface);
     if (!texture) return;
     float texW = 0, texH = 0;
     SDL_GetTextureSize(texture, &texW, &texH);
@@ -275,4 +271,5 @@ void Grid::drawGameOver(SDL_Renderer* renderer, const bool& lost, const double& 
 
     SDL_RenderTexture(renderer, texture, nullptr, &dst);
     SDL_DestroyTexture(texture);
+    
 }
