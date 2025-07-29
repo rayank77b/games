@@ -83,7 +83,7 @@ void Grid::draw(SDL_Renderer* renderer) {
     std::cout<<"\ropened cells: "<<countCells_<<std::flush;
 }
 
-void Grid::placeMines(int mineCount) {
+void Grid::placeMines(const int& mineCount) {
     std::vector<std::pair<int, int>> positions;
 
     for (int r = 0; r < rows_; ++r)
@@ -103,21 +103,19 @@ void Grid::placeMines(int mineCount) {
     std::cout << "Mines placed: " << std::min(mineCount, (int)positions.size()) << '\n';
 }
 
-void Grid::revealCell(int x, int y) {
+void Grid::revealCell(const int& x, const int& y) {
     // 1) Bounds check
     if (!inBounds(x, y)) return;
 
-    Cell& cell = cells_[x][y];
-
     // 2) If already revealed or flagged, do nothing
-    if (cell.isRevealed || cell.isFlagged) return;
+    if (cells_[x][y].isRevealed || cells_[x][y].isFlagged) return;
 
     // 3) Reveal this cell
-    cell.isRevealed = true;
+    cells_[x][y].isRevealed = true;
     countCells_++;
 
     // 4) If it has zero neighbor mines, recurse on all 8 neighbors
-    if (cell.adjacentMines == 0 && !cell.hasMine) {
+    if (cells_[x][y].adjacentMines == 0 && !cells_[x][y].hasMine) {
         for (int dy = -1; dy <= 1; ++dy) {
             for (int dx = -1; dx <= 1; ++dx) {
                 // skip the center cell
@@ -128,7 +126,7 @@ void Grid::revealCell(int x, int y) {
     }
 }
 
-int Grid::getMinenSum(int c, int r  ) {
+int Grid::getMinenSum(const int& c, const int& r) {
     int count = 0;
     for(int dx=-1; dx<=1; dx++) {
         for(int dy=-1; dy<=1; dy++) {
@@ -152,16 +150,16 @@ void Grid::computeAdjacency() {
     }
 }
 
-Cell& Grid::getMutableCell(int x, int y) {
+Cell& Grid::getMutableCell(const int& x, const int& y) {
     return cells_[x][y];
 }
 
-bool Grid::inBounds(int x, int y) const {
+bool Grid::inBounds(const int& x, const int& y) const {
     return x >= 0 && x < cols_ && y >= 0 && y < rows_;
 }
 
 
-GameState Grid::handleLeftClick(int x, int y) {
+GameState Grid::handleLeftClick(const int& x, const int& y) {
     int col = x / cellWidth_;
     int row = y / cellHeight_;
     if (inBounds(col, row)) {
@@ -184,7 +182,7 @@ GameState Grid::handleLeftClick(int x, int y) {
     return GameState::RUN;
 }
 
-GameState Grid::handleMouseClick(int mouseX, int mouseY, bool right) {
+GameState Grid::handleMouseClick(const int& mouseX, const int& mouseY, const bool& right) {
     int gridX = mouseX / cellWidth_;
     int gridY = mouseY / cellHeight_;
     GameState ret = GameState::RUN;
@@ -252,7 +250,7 @@ void Grid::drawNumbers(SDL_Renderer* renderer) {
     }
 }
 
-void Grid::drawGameOver(SDL_Renderer* renderer, bool lost, double sekunden) {
+void Grid::drawGameOver(SDL_Renderer* renderer, const bool& lost, const double& sekunden) {
     SDL_Color textColor = {0, 200, 0, 255};  // green
     std::string text = "YOU WON ";
     if(lost){

@@ -62,7 +62,7 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
         }
         app->present();
     } 
-    SDL_Delay(16); // ~60 FPS cap
+    SDL_Delay(100); // ~10 FPS cap
     //if(grid->gameOver_)
     //    return SDL_APP_SUCCESS;
     return SDL_APP_CONTINUE;

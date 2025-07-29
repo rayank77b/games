@@ -17,16 +17,16 @@ class Grid {
 public:
     Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f, TTF_Font* fb);
     void draw(SDL_Renderer* renderer);
-    GameState handleLeftClick(int x, int y);
-    GameState handleMouseClick(int mouseX, int mouseY, bool right);
+    GameState handleLeftClick(const int& x, const int& y);
+    GameState handleMouseClick(const int& mouseX, const int& mouseY, const bool& right);
     void drawNumbers(SDL_Renderer* renderer);
-    void drawGameOver(SDL_Renderer* renderer, bool lost, double sekunden);
+    void drawGameOver(SDL_Renderer* renderer, const bool&  lost, const double& sekunden);
 
     void restart();
 
     // Reveal the cell at (x,y). If neighborMines == 0, 
     // reveal neighbors recursively.
-    void revealCell(int x, int y);
+    void revealCell(const int& x, const int& y);
 
     int getCW() {return cellWidth_;};
     int getCH() {return cellHeight_;};
@@ -43,10 +43,10 @@ private:
     int countCells_;
     bool cheated = false;  // for debug 
 
-    void placeMines(int mineCount);
+    void placeMines(const int& mineCount);
     void computeAdjacency(); 
-    int getMinenSum(int c, int r);
+    int getMinenSum(const int& c, const int& r);
     // Helper to check bounds
-    bool inBounds(int x, int y) const; 
-    Cell& getMutableCell(int x, int y);
+    bool inBounds(const int& x, const int& y) const; 
+    Cell& getMutableCell(const int& x, const int& y);
 };
