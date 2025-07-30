@@ -2,6 +2,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 #include <vector>
+#include <string>
 #include "App.hpp"
 
 constexpr int  DEFAULT_MINE_COUNT = 40; 
@@ -43,7 +44,9 @@ private:
     int countCells_;
     bool cheated = false;  // for debug 
 
-    SDL_Color textColorBlack = {0, 0, 0, 255};  // black
+    SDL_Color textColorBlack_ = {0, 0, 0, 255};  // black
+
+    bool debug_ = false;
 
     void placeMines(const int& mineCount);
     void computeAdjacency(); 
@@ -51,4 +54,5 @@ private:
     // Helper to check bounds
     bool inBounds(const int& x, const int& y) const; 
     Cell& getMutableCell(const int& x, const int& y);
+    void debugMe(const std::string& s);
 };

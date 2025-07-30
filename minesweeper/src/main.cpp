@@ -85,11 +85,11 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event) {
     
     if (app->gameState == GameState::RUN) {
         if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-            int mx = event->button.x;
-            int my = event->button.y;
-            bool right = false;
-            if(event->button.button==SDL_BUTTON_RIGHT)  right = true;
-            app->gameState = grid->handleMouseClick(event->button.x, event->button.y, right);  
+            app->gameState = grid->handleMouseClick(
+                event->button.x, 
+                event->button.y, 
+                event->button.button==SDL_BUTTON_RIGHT
+            );  
         }
     }
     return SDL_APP_CONTINUE;

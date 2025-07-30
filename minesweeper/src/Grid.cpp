@@ -1,5 +1,6 @@
 #include "Grid.hpp"
 #include <iostream>
+#include <string>
 #include <random>
 #include <algorithm> // for std::shuffle
 #include <SDL3/SDL.h>
@@ -21,7 +22,7 @@ Grid::Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f, T
 }
 
 void Grid::restart() {
-    std::cout<<"Restart the game...\n";
+    debugMe("Restart the game...\n");
     // here we restart our game.
     for (int r = 0; r < rows_; ++r){ 
         for (int c = 0; c < cols_; ++c) {
@@ -80,7 +81,6 @@ void Grid::draw(SDL_Renderer* renderer) {
         int y = r * cellHeight_;
         SDL_RenderLine(renderer, 0, y, cols_ * cellWidth_, y);
     }
-    std::cout<<"\ropened cells: "<<countCells_<<std::flush;
 }
 
 void Grid::placeMines(const int& mineCount) {
@@ -100,7 +100,7 @@ void Grid::placeMines(const int& mineCount) {
         cells_[c][r].hasMine = true;
     }
 
-    std::cout << "Mines placed: " << std::min(mineCount, (int)positions.size()) << '\n';
+    debugMe("Mines placed: " + std::to_string(std::min(mineCount, (int)positions.size())));
 }
 
 void Grid::revealCell(const int& x, const int& y) {
@@ -165,18 +165,16 @@ GameState Grid::handleLeftClick(const int& x, const int& y) {
     if (inBounds(col, row)) {
         Cell& cell = cells_[col][row];
         if (!cell.isRevealed && !cell.isFlagged) {
-            std::cout << "Revealed (" << col << ", " << row << ")";
+            debugMe("Revealed (" + std::to_string(col) + ", " + std::to_string(row)+ ")");
             if (cell.hasMine) {
-                std::cout << " → 💣 BOOM";
+                debugMe(" → 💣 BOOM");
                 cell.isRevealed = true;
                 countCells_++;
-                std::cout << '\n';
                 return GameState::GAMEOVER;
             } else {
-                std::cout << " → " << cell.adjacentMines << " nearby mine(s)";
+                debugMe(" → " + std::to_string(cell.adjacentMines) + " nearby mine(s)");
                 revealCell(col,row);
             }
-            std::cout << '\n';
         }
     }
     return GameState::RUN;
@@ -187,14 +185,14 @@ GameState Grid::handleMouseClick(const int& mouseX, const int& mouseY, const boo
     int gridY = mouseY / cellHeight_;
     GameState ret = GameState::RUN;
 
-    std::cout<<"handleMouseClick("<<gridX<<"|"<<gridY<<") ";
+    debugMe("handleMouseClick("+std::to_string(gridX)+"|"+std::to_string(gridY)+") ");
     if(right) {  // right was clicked
-        std::cout<<"RIGHT was clicked \n";
+        debugMe("RIGHT was clicked");
         // Toggle flag
         if (inBounds(gridX, gridY)) {
             Cell& cell = getMutableCell(gridX, gridY);
             if (!cell.isRevealed) {
-                std::cout << "Flagged (" << gridX << ", " << gridY << ")";
+                debugMe("Flagged (" +  std::to_string(gridX) + ", " + std::to_string(gridY) + ")");
                 cell.isFlagged = !cell.isFlagged;
                 if(cell.isFlagged)
                     countCells_++;
@@ -203,7 +201,7 @@ GameState Grid::handleMouseClick(const int& mouseX, const int& mouseY, const boo
             }
         }
     } else  {   // left or midle was clicked
-        std::cout<<"LEFT was clicked \n";
+        debugMe("LEFT was clicked");
         ret = handleLeftClick(mouseX, mouseY);
     }
     if(countCells_==cols_*rows_)
@@ -220,7 +218,8 @@ void Grid::drawNumbers(SDL_Renderer* renderer) {
                 && cells_[c][r].adjacentMines > 0) {
                 std::string text = std::to_string(cells_[c][r].adjacentMines);
 
-                SDL_Surface* surface = TTF_RenderText_Solid(font_, text.c_str(), text.size(), textColorBlack);
+                SDL_Surface* surface = TTF_RenderText_Solid(font_, text.c_str(), 
+                        text.size(), textColorBlack_);
                 if (!surface) continue;
 
                 SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
@@ -272,4 +271,10 @@ void Grid::drawGameOver(SDL_Renderer* renderer, const bool& lost, const double& 
     SDL_RenderTexture(renderer, texture, nullptr, &dst);
     SDL_DestroyTexture(texture);
     
+}
+
+void Grid::debugMe(const std::string& s) {
+    if(debug_)
+        std::cout << s << '\n';
+
 }
