@@ -6,9 +6,10 @@
 #include <SDL3/SDL.h>
 #include <SDL3_ttf/SDL_ttf.h>
 
-Grid::Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f, TTF_Font* fb)
+Grid::Grid(int rows, int cols, int mines, int windowWidth, int windowHeight, TTF_Font* f, TTF_Font* fb)
     : rows_(rows), cols_(cols)
 {
+    minesCount_ = mines;
     font_ = f;
     fontBig_ = fb;
     cellWidth_  = windowWidth / cols_;
@@ -16,7 +17,7 @@ Grid::Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f, T
 
     cells_.resize(cols_, std::vector<Cell>(rows_));
 
-    placeMines(DEFAULT_MINE_COUNT);
+    placeMines(minesCount_);
     computeAdjacency();
     countCells_ = 0;
 }
@@ -32,7 +33,7 @@ void Grid::restart() {
             cells_[c][r].hasMine = false;
         }
     }
-    placeMines(DEFAULT_MINE_COUNT);
+    placeMines(minesCount_);
     computeAdjacency();
     countCells_ = 0;
 }
@@ -292,14 +293,14 @@ int Grid::getRemainMines() const {
             if (cells_[c][r].isFlagged)
                 count++;
     
-    return DEFAULT_MINE_COUNT-count;
+    return minesCount_-count;
 }
 
 void Grid::drawMenuBox(SDL_Renderer* renderer, const double& sekunden) {
     SDL_Color textColorWhite = {255, 255, 255, 255};  // white
 
     std::string text = "Fields: " + std::to_string(cols_) + "x" + std::to_string(rows_)
-        + " Mines: " + std::to_string(DEFAULT_MINE_COUNT)
+        + " Mines: " + std::to_string(minesCount_)
         + " Remain: " + std::to_string(getRemainMines())
         + " Time: " + std::to_string(int(sekunden)) + " seconds";
 

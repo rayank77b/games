@@ -5,8 +5,6 @@
 #include <string>
 #include "App.hpp"
 
-constexpr int  DEFAULT_MINE_COUNT = 40; 
-
 struct Cell {
     bool isRevealed = false;
     bool isFlagged = false;
@@ -16,7 +14,7 @@ struct Cell {
 
 class Grid {
 public:
-    Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f, TTF_Font* fb);
+    Grid(int rows, int cols, int mines, int windowWidth, int windowHeight, TTF_Font* f, TTF_Font* fb);
     void draw(SDL_Renderer* renderer, const double& sekunden);
     GameState handleLeftClick(const int& x, const int& y);
     GameState handleMouseClick(const int& mouseX, const int& mouseY, const bool& right);
@@ -35,6 +33,7 @@ public:
 private:
     int rows_;
     int cols_;
+    int minesCount_;
     int cellWidth_;
     int cellHeight_;
     TTF_Font* font_;
