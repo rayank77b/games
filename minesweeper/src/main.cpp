@@ -43,9 +43,20 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
         if (arg == "-c" && i + 1 < argc) {
             columns = std::stoi(argv[++i]);  // take next argument as value
+            if(columns > 51 ) {
+                std::cerr << "columns " << arg << " should be less.\n";
+                std::cerr << "it to much.\n";
+                return SDL_APP_FAILURE;
+            }
         }
         else if (arg == "-m" && i + 1 < argc) {
             mines = std::stoi(argv[++i]);    // take next argument as value
+
+            if(mines>0.9*(columns*columns)) { // fewer 90% of mines
+                std::cerr << "mines " << arg << " should be less.\n";
+                std::cerr << "it should be 90%% of columnsXcolumns numbers.\n";
+                return SDL_APP_FAILURE;
+            }
         }
         else {
             std::cerr << "Unknown or incomplete parameter: " << arg << "\n";

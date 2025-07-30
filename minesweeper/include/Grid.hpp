@@ -45,7 +45,7 @@ private:
 
     SDL_Color textColorBlack_ = {0, 0, 0, 255};  // black
 
-    bool debug_ = true;
+    bool debug_ = false;
     int menuHeight_ = 50;
 
     void placeMines(const int& mineCount);
