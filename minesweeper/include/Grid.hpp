@@ -17,12 +17,12 @@ struct Cell {
 class Grid {
 public:
     Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f, TTF_Font* fb);
-    void draw(SDL_Renderer* renderer);
+    void draw(SDL_Renderer* renderer, const double& sekunden);
     GameState handleLeftClick(const int& x, const int& y);
     GameState handleMouseClick(const int& mouseX, const int& mouseY, const bool& right);
     void drawNumbers(SDL_Renderer* renderer);
     void drawGameOver(SDL_Renderer* renderer, const bool&  lost, const double& sekunden);
-
+    void drawMenuBox(SDL_Renderer* renderer, const double& sekunden);
     void restart();
 
     // Reveal the cell at (x,y). If neighborMines == 0, 
@@ -46,7 +46,8 @@ private:
 
     SDL_Color textColorBlack_ = {0, 0, 0, 255};  // black
 
-    bool debug_ = false;
+    bool debug_ = true;
+    int menuHeight_ = 50;
 
     void placeMines(const int& mineCount);
     void computeAdjacency(); 
@@ -55,4 +56,5 @@ private:
     bool inBounds(const int& x, const int& y) const; 
     Cell& getMutableCell(const int& x, const int& y);
     void debugMe(const std::string& s);
+    int getRemainMines() const;
 };

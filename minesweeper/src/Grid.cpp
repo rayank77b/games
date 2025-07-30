@@ -12,7 +12,7 @@ Grid::Grid(int rows, int cols, int windowWidth, int windowHeight, TTF_Font* f, T
     font_ = f;
     fontBig_ = fb;
     cellWidth_  = windowWidth / cols_;
-    cellHeight_ = windowHeight / rows_;
+    cellHeight_ = (windowHeight-menuHeight_) / rows_;
 
     cells_.resize(cols_, std::vector<Cell>(rows_));
 
@@ -37,7 +37,7 @@ void Grid::restart() {
     countCells_ = 0;
 }
 
-void Grid::draw(SDL_Renderer* renderer) {
+void Grid::draw(SDL_Renderer* renderer, const double& sekunden) {
     for (int r = 0; r < rows_; ++r) {
         for (int c = 0; c < cols_; ++c) {
             const Cell& cell = cells_[c][r];
@@ -58,7 +58,7 @@ void Grid::draw(SDL_Renderer* renderer) {
 
             SDL_FRect rect = {
                 static_cast<float>(c * cellWidth_),
-                static_cast<float>(r * cellHeight_),
+                static_cast<float>(menuHeight_ + r * cellHeight_),
                 static_cast<float>(cellWidth_),
                 static_cast<float>(cellHeight_)
             };
@@ -68,18 +68,20 @@ void Grid::draw(SDL_Renderer* renderer) {
 
     drawNumbers(renderer);
 
+    drawMenuBox(renderer, sekunden);
+
     // draw grid on top
-    // vertical lines
     SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
+    // vertical lines
     for (int c = 0; c <= cols_; ++c) {
         int x = c * cellWidth_;
-        SDL_RenderLine(renderer, x, 0, x, rows_ * cellHeight_);
+        SDL_RenderLine(renderer, x, menuHeight_, x, rows_ * cellHeight_+ menuHeight_);
     }
 
     // horizontal lines
     for (int r = 0; r <= rows_; ++r) {
         int y = r * cellHeight_;
-        SDL_RenderLine(renderer, 0, y, cols_ * cellWidth_, y);
+        SDL_RenderLine(renderer, 0, menuHeight_+y, cols_ * cellWidth_, menuHeight_+y);
     }
 }
 
@@ -161,7 +163,8 @@ bool Grid::inBounds(const int& x, const int& y) const {
 
 GameState Grid::handleLeftClick(const int& x, const int& y) {
     int col = x / cellWidth_;
-    int row = y / cellHeight_;
+    int row = (y - menuHeight_) / cellHeight_;
+
     if (inBounds(col, row)) {
         Cell& cell = cells_[col][row];
         if (!cell.isRevealed && !cell.isFlagged) {
@@ -181,10 +184,16 @@ GameState Grid::handleLeftClick(const int& x, const int& y) {
 }
 
 GameState Grid::handleMouseClick(const int& mouseX, const int& mouseY, const bool& right) {
-    int gridX = mouseX / cellWidth_;
-    int gridY = mouseY / cellHeight_;
     GameState ret = GameState::RUN;
 
+    if(mouseY<menuHeight_)   // clicked on text output
+        return ret;
+
+    int gridX = mouseX / cellWidth_;
+    //int gridY = mouseY / cellHeight_;
+    int gridY = (mouseY - menuHeight_) / cellHeight_;
+
+    std::cout<<"clicked> "<<mouseX<<":"<<mouseY<<"\n";
     debugMe("handleMouseClick("+std::to_string(gridX)+"|"+std::to_string(gridY)+") ");
     if(right) {  // right was clicked
         debugMe("RIGHT was clicked");
@@ -223,7 +232,6 @@ void Grid::drawNumbers(SDL_Renderer* renderer) {
                 if (!surface) continue;
 
                 SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-                //SDL_free(surface);
                 SDL_DestroySurface(surface);
                 if (!texture) continue;
 
@@ -231,7 +239,7 @@ void Grid::drawNumbers(SDL_Renderer* renderer) {
 
                 SDL_FRect dst {
                     static_cast<float>(c * cellWidth_ + cellWidth_ / 2 - texW / 2),
-                    static_cast<float>(r * cellHeight_ + cellHeight_ / 2 - texH / 2),
+                    static_cast<float>(menuHeight_ + r * cellHeight_ + cellHeight_ / 2 - texH / 2),
                     static_cast<float>(texW),
                     static_cast<float>(texH)
                 };
@@ -255,7 +263,6 @@ void Grid::drawGameOver(SDL_Renderer* renderer, const bool& lost, const double& 
     SDL_Surface* surface = TTF_RenderText_Blended_Wrapped(fontBig_, text.c_str(), text.size(), textColor,700);
     if (!surface) return;
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    //SDL_free(surface);
     SDL_DestroySurface(surface);
     if (!texture) return;
     float texW = 0, texH = 0;
@@ -270,11 +277,47 @@ void Grid::drawGameOver(SDL_Renderer* renderer, const bool& lost, const double& 
 
     SDL_RenderTexture(renderer, texture, nullptr, &dst);
     SDL_DestroyTexture(texture);
-    
 }
 
 void Grid::debugMe(const std::string& s) {
     if(debug_)
         std::cout << s << '\n';
 
+}
+
+int Grid::getRemainMines() const {
+    int count = 0;
+    for (int r = 0; r < rows_; ++r) 
+        for (int c = 0; c < cols_; ++c)        
+            if (cells_[c][r].isFlagged)
+                count++;
+    
+    return DEFAULT_MINE_COUNT-count;
+}
+
+void Grid::drawMenuBox(SDL_Renderer* renderer, const double& sekunden) {
+    SDL_Color textColorWhite = {255, 255, 255, 255};  // white
+
+    std::string text = "Fields: " + std::to_string(cols_) + "x" + std::to_string(rows_)
+        + " Mines: " + std::to_string(DEFAULT_MINE_COUNT)
+        + " Remain: " + std::to_string(getRemainMines())
+        + " Time: " + std::to_string(int(sekunden)) + " seconds";
+
+    SDL_Surface* surface = TTF_RenderText_Blended(font_, text.c_str(), text.size(), textColorWhite);
+    if (!surface) return;
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_DestroySurface(surface);
+    if (!texture) return;
+    float texW = 0, texH = 0;
+    SDL_GetTextureSize(texture, &texW, &texH);
+
+    SDL_FRect dst {
+        5.0,
+        5.0,
+        static_cast<float>(texW),
+        static_cast<float>(texH)
+    };
+
+    SDL_RenderTexture(renderer, texture, nullptr, &dst);
+    SDL_DestroyTexture(texture);
 }

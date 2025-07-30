@@ -48,16 +48,20 @@ SDL_AppResult SDL_AppIterate(void* appstate) {
         start = std::chrono::high_resolution_clock::now();
         messed = false;
     } else {
+        if(!messed){
+            end = std::chrono::high_resolution_clock::now();
+        }
+        std::chrono::duration<double> duration = end - start;
+        double sekunden = duration.count();
+        
         app->clear();
-        grid->draw(app->renderer());
+        grid->draw(app->renderer(), sekunden);
+
         if( app->gameState==GameState::GAMEOVER ||
             app->gameState==GameState::YOUWON ){
-            if(!messed){
-                end = std::chrono::high_resolution_clock::now();
+            if(!messed){  // stop mess time
                 messed = true;
             }
-            std::chrono::duration<double> duration = end - start;
-            double sekunden = duration.count();
             grid->drawGameOver(app->renderer(), app->gameState==GameState::GAMEOVER, sekunden);
         }
         app->present();
